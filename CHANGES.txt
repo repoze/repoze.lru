@@ -1,7 +1,12 @@
 repoze.lru
 ==========
 
-0.1 (unreleaesd)
+0.2 (unreleased)
+----------------
+
+- ...
+
+0.1 (2009/06/14)
 ----------------
 
 - Initial release.
