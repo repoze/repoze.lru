@@ -9,14 +9,18 @@ class LRUCache(object):
         """ Implements a psueudo-LRU algorithm (CLOCK) """
         if size < 1:
             raise ValueError('size must be >1')
+        self.size = size
+        self.lock = threading.Lock()
+        self.clear()
+
+    def clear(self):
+        size = self.size
         self.clock = []
         for i in xrange(0, size):
             self.clock.append({'key':_marker, 'ref':False})
-        self.size = size
         self.maxpos = size - 1
         self.hand = 0
         self.data = {}
-        self.lock = threading.Lock()
 
     def get(self, key, default=None):
         try:
