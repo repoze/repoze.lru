@@ -14,13 +14,17 @@ class LRUCache(object):
         self.clear()
 
     def clear(self):
-        size = self.size
-        self.clock = []
-        for i in xrange(0, size):
-            self.clock.append({'key':_marker, 'ref':False})
-        self.maxpos = size - 1
-        self.hand = 0
-        self.data = {}
+        self.lock.acquire()
+        try:
+            size = self.size
+            self.clock = []
+            for i in xrange(0, size):
+                self.clock.append({'key':_marker, 'ref':False})
+            self.maxpos = size - 1
+            self.hand = 0
+            self.data = {}
+        finally:
+            self.lock.release()
 
     def get(self, key, default=None):
         try:
