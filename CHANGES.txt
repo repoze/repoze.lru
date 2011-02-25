@@ -1,6 +1,11 @@
 repoze.lru
 ==========
 
+Next release
+------------
+
+- Moved to GitHub.
+
 0.3 (2009/06/16)
 ----------------
 
