@@ -33,6 +33,7 @@ setup(name='repoze.lru',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
+        "Programming Language :: Python : 3",
         ],
       keywords='repoze lru cache',
       author="Agendaless Consulting",
