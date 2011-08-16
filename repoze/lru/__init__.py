@@ -1,6 +1,10 @@
 """ LRU caching class and decorator """
 
 import threading
+try:
+    range = xrange
+except NameError:
+    pass
 
 _marker = object()
 
@@ -18,7 +22,7 @@ class LRUCache(object):
         try:
             size = self.size
             self.clock = []
-            for i in xrange(0, size):
+            for i in range(0, size):
                 self.clock.append({'key':_marker, 'ref':False})
             self.maxpos = size - 1
             self.hand = 0
