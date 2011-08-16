@@ -5,7 +5,10 @@ Next release
 ------------
 
 - Moved to GitHub.
+
 - Added Python 3 support.
+
+- Added tox.ini for easier testing.
 
 0.3 (2009/06/16)
 ----------------

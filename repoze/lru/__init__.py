@@ -1,9 +1,10 @@
 """ LRU caching class and decorator """
 
 import threading
+
 try:
     range = xrange
-except NameError:
+except NameError: # pragma: no cover
     pass
 
 _marker = object()

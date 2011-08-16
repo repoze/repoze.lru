@@ -6,6 +6,7 @@ env26/
 .coverage
 dist/
 *~
-.tox
+.tox/
 nosetests.xml
+coverage.xml
 repoze/lru/coverage.xml
