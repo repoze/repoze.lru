@@ -5,6 +5,7 @@ Next release
 ------------
 
 - Moved to GitHub.
+- Added Python 3 support.
 
 0.3 (2009/06/16)
 ----------------
