@@ -1,12 +1,11 @@
-repoze.lru
-==========
+0.4 (2011-09-04)
+----------------
 
-Next release
-------------
+- Moved to GitHub (https://github.com/repoze/repoze.lru).
 
-- Moved to GitHub.
+- Added Python 3.2 support.
 
-- Added Python 3 support.
+- Python 2.4 no longer supported.
 
 - Added tox.ini for easier testing.
 

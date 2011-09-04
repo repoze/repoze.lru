@@ -12,8 +12,6 @@
 #
 ##############################################################################
 
-__version__ = '0.3'
-
 import os
 
 from setuptools import setup, find_packages
@@ -27,7 +25,7 @@ except:
     CHANGES = ''
 
 setup(name='repoze.lru',
-      version=__version__,
+      version='0.4',
       description='A tiny LRU cache implementation and decorator',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
