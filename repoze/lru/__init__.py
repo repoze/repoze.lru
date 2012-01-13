@@ -38,10 +38,6 @@ class LRUCache(object):
             return default
         pos, val = datum
         self.clock[pos]['ref'] = True
-        hand = pos + 1
-        if hand > self.maxpos:
-            hand = 0
-        self.hand = hand
         return val
 
     def put(self, key, val, _marker=_marker):
