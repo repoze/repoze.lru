@@ -16,16 +16,19 @@ class LRUCache(object):
             raise ValueError('size must be >1')
         self.size = size
         self.lock = threading.Lock()
+        self.hand = 0
+        self.maxpos = size - 1
+        self.clock_keys = None
+        self.clock_refs = None
+        self.data = None
         self.clear()
 
     def clear(self):
         self.lock.acquire()
         try:
             size = self.size
-            self.clock = []
-            for i in range(0, size):
-                self.clock.append({'key':_marker, 'ref':False})
-            self.maxpos = size - 1
+            self.clock_keys = [_marker] * size
+            self.clock_refs = [False] * size
             self.hand = 0
             self.data = {}
         finally:
@@ -33,17 +36,17 @@ class LRUCache(object):
 
     def get(self, key, default=None):
         try:
-            datum = self.data[key]
+            pos, val = self.data[key]
         except KeyError:
             return default
-        pos, val = datum
-        self.clock[pos]['ref'] = True
+        self.clock_refs[pos] = True
         return val
 
     def put(self, key, val, _marker=_marker):
         hand = self.hand
         maxpos = self.maxpos
-        clock = self.clock
+        clock_refs = self.clock_refs
+        clock_keys = self.clock_keys
         data = self.data
         lock = self.lock
 
@@ -56,27 +59,26 @@ class LRUCache(object):
                 pos, old_val = entry
                 if old_val is not val:
                     data[key] = (pos, val)
-                self.clock[pos]['ref'] = True
+                self.clock_refs[pos] = True
                 return
             finally:
                 lock.release()
 
         while 1:
-            current = clock[hand]
-            ref = current['ref']
-            if ref is True:
-                current['ref'] = False
+            ref = clock_refs[hand]
+            if ref == True:
+                clock_refs[hand] = False
                 hand = hand + 1
                 if hand > maxpos:
                     hand = 0
             else:
                 lock.acquire()
                 try:
-                    oldkey = current['key']
+                    oldkey = clock_keys[hand]
                     if oldkey in data:
                         del data[oldkey]
-                    current['key'] = key
-                    current['ref'] = True
+                    clock_keys[hand] = key
+                    clock_refs[hand] = True
                     data[key] = (hand, val)
                     hand += 1
                     if hand > maxpos:

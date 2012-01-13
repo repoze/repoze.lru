@@ -18,31 +18,31 @@ class LRUCacheTests(unittest.TestCase):
 
         cache.put('a', '1')
         pos, value = cache.data.get('a')
-        self.assertEqual(cache.clock[pos]['ref'], True)
-        self.assertEqual(cache.clock[pos]['key'], 'a')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.clock_keys[pos], 'a')
         self.assertEqual(value, '1')
         self.assertEqual(cache.get('a'), '1')
-        self.assertEqual(cache.hand, pos+1)
+        self.assertEqual(cache.hand, pos + 1)
 
         pos, value = cache.data.get('a')
-        self.assertEqual(cache.clock[pos]['ref'], True)
-        self.assertEqual(cache.hand, pos+1)
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.hand, pos + 1)
         self.assertEqual(len(cache.data), 1)
 
         cache.put('b', '2')
         pos, value = cache.data.get('b')
-        self.assertEqual(cache.clock[pos]['ref'], True)
-        self.assertEqual(cache.clock[pos]['key'], 'b')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.clock_keys[pos], 'b')
         self.assertEqual(len(cache.data), 2)
 
         cache.put('c', '3')
         pos, value = cache.data.get('c')
-        self.assertEqual(cache.clock[pos]['ref'], True)
-        self.assertEqual(cache.clock[pos]['key'], 'c')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.clock_keys[pos], 'c')
         self.assertEqual(len(cache.data), 3)
 
         pos, value = cache.data.get('a')
-        self.assertEqual(cache.clock[pos]['ref'], True)
+        self.assertEqual(cache.clock_refs[pos], True)
 
         cache.get('a')
         # All items have ref==True. cache.hand points to "a". Putting
