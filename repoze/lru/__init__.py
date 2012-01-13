@@ -47,9 +47,19 @@ class LRUCache(object):
         data = self.data
         lock = self.lock
 
-        end = hand - 1
-        if end < 0:
-            end = maxpos
+        entry = self.data.get(key)
+        if entry is not None:
+            lock.acquire()
+            try:
+                # We already have key. Only make sure data is up to date and to
+                # remember that it was used.
+                pos, old_val = entry
+                if old_val is not val:
+                    data[key] = (pos, val)
+                self.clock[pos]['ref'] = True
+                return
+            finally:
+                lock.release()
 
         while 1:
             current = clock[hand]
@@ -59,7 +69,7 @@ class LRUCache(object):
                 hand = hand + 1
                 if hand > maxpos:
                     hand = 0
-            elif ref is False or hand == end:
+            else:
                 lock.acquire()
                 try:
                     oldkey = current['key']

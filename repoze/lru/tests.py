@@ -1,3 +1,4 @@
+#!/usr/bin/python -tt
 import unittest
 
 class LRUCacheTests(unittest.TestCase):
@@ -14,6 +15,7 @@ class LRUCacheTests(unittest.TestCase):
     def test_it(self):
         cache = self._makeOne(3)
         self.assertEqual(cache.get('a'), None)
+
         cache.put('a', '1')
         pos, value = cache.data.get('a')
         self.assertEqual(cache.clock[pos]['ref'], True)
@@ -21,35 +23,46 @@ class LRUCacheTests(unittest.TestCase):
         self.assertEqual(value, '1')
         self.assertEqual(cache.get('a'), '1')
         self.assertEqual(cache.hand, pos+1)
+
         pos, value = cache.data.get('a')
         self.assertEqual(cache.clock[pos]['ref'], True)
         self.assertEqual(cache.hand, pos+1)
         self.assertEqual(len(cache.data), 1)
+
         cache.put('b', '2')
         pos, value = cache.data.get('b')
         self.assertEqual(cache.clock[pos]['ref'], True)
         self.assertEqual(cache.clock[pos]['key'], 'b')
         self.assertEqual(len(cache.data), 2)
+
         cache.put('c', '3')
         pos, value = cache.data.get('c')
         self.assertEqual(cache.clock[pos]['ref'], True)
         self.assertEqual(cache.clock[pos]['key'], 'c')
         self.assertEqual(len(cache.data), 3)
+
         pos, value = cache.data.get('a')
         self.assertEqual(cache.clock[pos]['ref'], True)
+
         cache.get('a')
+        # All items have ref==True. cache.hand points to "a". Putting
+        # "d" will set ref=False on all items and then replace "a",
+        # because "a" is the first item with ref==False that is found.
         cache.put('d', '4')
         self.assertEqual(len(cache.data), 3)
-        self.assertEqual(cache.data.get('b'), None)
+        self.assertEqual(cache.data.get('a'), None)
+
+        # Only item "d" has ref==True. cache.hand points at "b", so "b"
+        # will be evicted when "e" is inserted. "c" will be left alone.
         cache.put('e', '5')
         self.assertEqual(len(cache.data), 3)
-        self.assertEqual(cache.data.get('c'), None)
+        self.assertEqual(cache.data.get('b'), None)
         self.assertEqual(cache.get('d'), '4')
         self.assertEqual(cache.get('e'), '5')
-        self.assertEqual(cache.get('a'), '1')
+        self.assertEqual(cache.get('a'), None)
         self.assertEqual(cache.get('b'), None)
-        self.assertEqual(cache.get('c'), None)
-                         
+        self.assertEqual(cache.get('c'), '3')
+
 class DecoratorTests(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.lru import lru_cache
@@ -73,11 +86,11 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result, 1)
         self.assertEqual(len(cache), 1)
         result = decorated(2)
-        self.assertEqual(cache[(2,)], 2) 
+        self.assertEqual(cache[(2,)], 2)
         self.assertEqual(result, 2)
         self.assertEqual(len(cache), 2)
         result = decorated(2)
-        self.assertEqual(cache[(2,)], 2) 
+        self.assertEqual(cache[(2,)], 2)
         self.assertEqual(result, 2)
         self.assertEqual(len(cache), 2)
 
@@ -88,12 +101,15 @@ class DecoratorTests(unittest.TestCase):
             return args
         decorated = decorator(moreargs)
         result = decorated(3, 4, 5)
-        self.assertEqual(cache[(3,4,5)], (3,4,5)) 
+        self.assertEqual(cache[(3,4,5)], (3,4,5))
         self.assertEqual(result, (3,4,5))
         self.assertEqual(len(cache), 1)
-            
-   
+
+
 class DummyLRUCache(dict):
     def put(self, k, v):
         return self.__setitem__(k, v)
-    
+
+if __name__ == "__main__":
+    unittest.main()
+
