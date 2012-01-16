@@ -7,13 +7,18 @@ try:
 except NameError: # pragma: no cover
     pass
 
-_marker = object()
+_MARKER = object()
 
 class LRUCache(object):
+    """ Implements a pseudo-LRU algorithm (CLOCK)
+
+    The Clock algorithm is not kept strictly to improve performance, e.g. to
+    allow get() and invalidate() to work without acquiring the lock.
+    """
     def __init__(self, size):
-        """ Implements a psueudo-LRU algorithm (CLOCK) """
+        size = int(size)
         if size < 1:
-            raise ValueError('size must be >1')
+            raise ValueError('size must be >0')
         self.size = size
         self.lock = threading.Lock()
         self.hand = 0
@@ -24,23 +29,25 @@ class LRUCache(object):
         self.clear()
 
     def clear(self):
+        """Remove all entries from the cache"""
         self.lock.acquire()
         try:
             # If really clear()ing a full cache, clean up self.data first to
             # give garbage collection a chance to reduce memorey usage.
-            # Instantiating "[_marker] * size" will temporarily have 2 lists
+            # Instantiating "[_MARKER] * size" will temporarily have 2 lists
             # in memory -> high peak memory usage for tiny amount of time.
             # With self.data already clear, that peak should not exceed what
             # we normally use.
             self.data = {}
             size = self.size
-            self.clock_keys = [_marker] * size
+            self.clock_keys = [_MARKER] * size
             self.clock_refs = [False] * size
             self.hand = 0
         finally:
             self.lock.release()
 
     def get(self, key, default=None):
+        """Return value for key, if not in cache, return default"""
         try:
             pos, val = self.data[key]
         except KeyError:
@@ -48,7 +55,8 @@ class LRUCache(object):
         self.clock_refs[pos] = True
         return val
 
-    def put(self, key, val, _marker=_marker):
+    def put(self, key, val):
+        """Add key to the cache with value val"""
         # These do not change or they are just references, no need for locking.
         maxpos = self.maxpos
         clock_refs = self.clock_refs
@@ -105,8 +113,8 @@ class LRUCache(object):
     def invalidate(self, key):
         """Remove key from the cache"""
         # pop with default arg will not raise KeyError
-        entry = self.data.pop(key, _marker)
-        if entry is not _marker:
+        entry = self.data.pop(key, _MARKER)
+        if entry is not _MARKER:
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
@@ -121,7 +129,7 @@ class lru_cache(object):
 
     def __call__(self, f):
         cache = self.cache
-        marker = _marker
+        marker = _MARKER
         def lru_cached(*arg):
             val = cache.get(arg, marker)
             if val is marker:
