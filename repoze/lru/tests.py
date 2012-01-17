@@ -1,16 +1,213 @@
 #!/usr/bin/python -tt
+import random
 import unittest
+
 
 class LRUCacheTests(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.lru import LRUCache
         return LRUCache
 
+    def check_cache_is_consistent(self, cache):
+        """Return if cache is consistent, else raise fail test case."""
+        # cache.hand/maxpos/size
+        self.assertLess(cache.hand, len(cache.clock_keys))
+        self.assertGreaterEqual(cache.hand, 0)
+        self.assertEqual(cache.maxpos, cache.size - 1)
+        self.assertEqual(len(cache.clock_keys), cache.size)
+
+        # lengths of data structures
+        self.assertEqual(len(cache.clock_keys), len(cache.clock_refs))
+        self.assertLessEqual(len(cache.data), len(cache.clock_refs))
+
+        # For each item in cache.data
+        #   1. pos must be a valid index
+        #   2. clock_keys must point back to the entry
+        for key, value in cache.data.iteritems():
+            pos, val = value
+            self.assert_(isinstance(pos, int) or isinstance(pos, long))
+            self.assert_(pos >= 0)
+            self.assert_(pos <= cache.maxpos)
+
+            clock_key = cache.clock_keys[pos]
+            self.assert_(clock_key is key)
+            clock_ref = cache.clock_refs[pos]
+
+        # All clock_refs must be True or False, nothing else.
+        for clock_ref in cache.clock_refs:
+            self.assert_(clock_ref is True or clock_ref is False)
+
     def _makeOne(self, size):
         return self._getTargetClass()(size)
 
     def test_size_lessthan_1(self):
         self.assertRaises(ValueError, self._makeOne, 0)
+
+    def test_get(self):
+        cache = self._makeOne(1)
+        # Must support different types of keys
+        self.assertEqual(cache.get("foo"), None)
+        self.assertEqual(cache.get(42), None)
+        self.assertEqual(cache.get(("foo", 42)), None)
+        self.assertEqual(cache.get(None), None)
+        self.assertEqual(cache.get(""), None)
+        self.assertEqual(cache.get(object()), None)
+        # Check if default value is used
+        self.assertEqual(cache.get("foo", "bar"), "bar")
+        self.assertEqual(cache.get("foo", default="bar"), "bar")
+
+        self.check_cache_is_consistent(cache)
+
+    def test_put(self):
+        cache = self._makeOne(8)
+        self.check_cache_is_consistent(cache)
+        # Must support different types of keys
+        cache.put("foo", "FOO")
+        cache.put(42, "fortytwo")
+        cache.put( ("foo", 42), "tuple_as_key")
+        cache.put(None, "None_as_key")
+        cache.put("", "empty_string_as_key")
+        cache.put(3.141, "float_as_key")
+        my_object = object()
+        cache.put(my_object, "object_as_key")
+
+        self.check_cache_is_consistent(cache)
+
+        self.assertEqual(cache.get("foo"), "FOO")
+        self.assertEqual(cache.get(42), "fortytwo")
+        self.assertEqual(cache.get(("foo", 42), "fortytwo"), "tuple_as_key")
+        self.assertEqual(cache.get(None), "None_as_key")
+        self.assertEqual(cache.get(""), "empty_string_as_key")
+        self.assertEqual(cache.get(3.141), "float_as_key")
+        self.assertEqual(cache.get(my_object), "object_as_key")
+
+        # put()ing again must overwrite
+        cache.put(42, "fortytwo again")
+        self.assertEqual(cache.get(42), "fortytwo again")
+
+        self.check_cache_is_consistent(cache)
+
+    def test_invalidate(self):
+        cache = self._makeOne(3)
+        cache.put("foo", "bar")
+        cache.put("FOO", "BAR")
+
+        cache.invalidate("foo")
+        self.assertEqual(cache.get("foo"), None)
+        self.assertEqual(cache.get("FOO"), "BAR")
+        self.check_cache_is_consistent(cache)
+
+        cache.invalidate("FOO")
+        self.assertEqual(cache.get("foo"), None)
+        self.assertEqual(cache.get("FOO"), None)
+        self.assertEqual(cache.data, {})
+        self.check_cache_is_consistent(cache)
+
+        cache.put("foo", "bar")
+        cache.invalidate("nonexistingkey")
+        self.assertEqual(cache.get("foo"), "bar")
+        self.assertEqual(cache.get("FOO"), None)
+        self.check_cache_is_consistent(cache)
+
+    def test_small_cache(self):
+        """Cache of size 1 must work"""
+        cache = self._makeOne(1)
+
+        cache.put("foo", "bar")
+        self.assertEqual(cache.get("foo"), "bar")
+        self.check_cache_is_consistent(cache)
+
+        cache.put("FOO", "BAR")
+        self.assertEqual(cache.get("FOO"), "BAR")
+        self.assertEqual(cache.get("foo"), None)
+        self.check_cache_is_consistent(cache)
+
+        # put() again
+        cache.put("FOO", "BAR")
+        self.assertEqual(cache.get("FOO"), "BAR")
+        self.assertEqual(cache.get("foo"), None)
+        self.check_cache_is_consistent(cache)
+
+        # invalidate()
+        cache.invalidate("FOO")
+        self.check_cache_is_consistent(cache)
+        self.assertEqual(cache.get("FOO"), None)
+        self.assertEqual(cache.get("foo"), None)
+
+        # clear()
+        cache.put("foo", "bar")
+        self.assertEqual(cache.get("foo"), "bar")
+        cache.clear()
+        self.check_cache_is_consistent(cache)
+        self.assertEqual(cache.get("FOO"), None)
+        self.assertEqual(cache.get("foo"), None)
+
+    def test_equal_but_not_identical(self):
+        """equal but not identical keys must be treated the same"""
+        cache = self._makeOne(1)
+        tuple_one = (1, 1)
+        tuple_two = (1, 1)
+        cache.put(tuple_one, 42)
+
+        self.assertEqual(cache.get(tuple_one), 42)
+        self.assertEqual(cache.get(tuple_two), 42)
+        self.check_cache_is_consistent(cache)
+
+        cache = self._makeOne(1)
+        cache.put(tuple_one, 42)
+        cache.invalidate(tuple_two)
+        self.assertEqual(cache.get(tuple_one), None)
+        self.assertEqual(cache.get(tuple_two), None)
+
+    def test_perfect_hitrate(self):
+        """If cache size equals number of items, expect 100% cache hits"""
+        size = 1000
+        cache = self._makeOne(size)
+
+        for count in xrange(size):
+            cache.put(count, "item%s" % count)
+
+        for cache_op in xrange(10000):
+            item = random.randrange(0, size - 1)
+            if random.getrandbits(1):
+                self.assertEqual(cache.get(item), "item%s" % item)
+            else:
+                cache.put(item, "item%s" % item)
+
+        self.check_cache_is_consistent(cache)
+
+    def test_imperfect_hitrate(self):
+        """If cache size == half the number of items -> hit rate ~50%"""
+        size = 1000
+        cache = self._makeOne(size / 2)
+
+        for count in xrange(size):
+            cache.put(count, "item%s" % count)
+
+        hits = 0
+        misses = 0
+        total_gets = 0
+        for cache_op in xrange(10000):
+            item = random.randrange(0, size - 1)
+            if random.getrandbits(1):
+                entry = cache.get(item)
+                total_gets += 1
+                self.assert_(
+                        (entry == "item%s" % item) or
+                        entry is None)
+                if entry is None:
+                    misses += 1
+                else:
+                    hits += 1
+            else:
+                cache.put(item, "item%s" % item)
+
+        # Cache hit rate should be roughly 50%
+        hit_ratio = hits / float(total_gets) * 100
+        self.assertGreater(hit_ratio, 45)
+        self.assertLess(hit_ratio, 55)
+
+        self.check_cache_is_consistent(cache)
 
     def test_it(self):
         cache = self._makeOne(3)
@@ -62,6 +259,8 @@ class LRUCacheTests(unittest.TestCase):
         self.assertEqual(cache.get('a'), None)
         self.assertEqual(cache.get('b'), None)
         self.assertEqual(cache.get('c'), '3')
+
+        self.check_cache_is_consistent(cache)
 
 class DecoratorTests(unittest.TestCase):
     def _getTargetClass(self):
