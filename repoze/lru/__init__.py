@@ -9,6 +9,8 @@ except NameError: # pragma: no cover
     pass
 
 _MARKER = object()
+# By default, expire items after 2**60 seconds. This fits into 64 bit
+# integers and is close enough to "never" for practical purposes.
 _DEFAULT_TIMEOUT = 2 ** 60
 
 class LRUCache(object):
@@ -249,10 +251,17 @@ class ExpiringLRUCache(object):
         # else: key was not in cache. Nothing to do.
 
 class lru_cache(object):
-    """ Decorator for LRU-cached function """
-    def __init__(self, maxsize, cache=None): # cache is an arg to serve tests
+    """ Decorator for LRU-cached function
+
+    timeout parameter specifies after how many seconds a cached entry should
+    be considered invalid.
+    """
+    def __init__(self, maxsize, cache=None, timeout=None): # cache is an arg to serve tests
         if cache is None:
-            cache = LRUCache(maxsize)
+            if timeout is None:
+                cache = LRUCache(maxsize)
+            else:
+                cache = ExpiringLRUCache(maxsize, default_timeout=timeout)
         self.cache = cache
 
     def __call__(self, f):

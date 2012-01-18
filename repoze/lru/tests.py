@@ -266,7 +266,7 @@ class LRUCacheTests(unittest.TestCase):
 
 class ExpiringLRUCacheTests(LRUCacheTests):
     def _getTargetClass(self):
-        from repoze.lru import LRUCache
+        from repoze.lru import ExpiringLRUCache
         return ExpiringLRUCache
 
     def _makeOne(self, size, default_timeout=None):
@@ -455,8 +455,8 @@ class DecoratorTests(unittest.TestCase):
         from repoze.lru import lru_cache
         return lru_cache
 
-    def _makeOne(self, maxsize, cache):
-        return self._getTargetClass()(maxsize, cache)
+    def _makeOne(self, maxsize, cache, timeout=None):
+        return self._getTargetClass()(maxsize, timeout=timeout, cache=cache)
 
     def test_ctor_nocache(self):
         decorator = self._makeOne(10, None)
@@ -492,6 +492,34 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result, (3, 4, 5))
         self.assertEqual(len(cache), 1)
 
+    def test_expiry(self):
+        """When timeout is given, decorator must eventually forget entries"""
+        @self._makeOne(1, None, timeout=0.1)
+        def sleep_a_bit(param):
+            time.sleep(0.1)
+            return 2 * param
+
+        # First call must take at least 0.1 seconds
+        start = time.time()
+        result1 = sleep_a_bit("hello")
+        stop = time.time()
+        self.assertEqual(result1, 2 * "hello")
+        self.assertGreater(stop - start, 0.1)
+
+        # Second call must take less than 0.1 seconds.
+        start = time.time()
+        result2 = sleep_a_bit("hello")
+        stop = time.time()
+        self.assertEqual(result2, 2 * "hello")
+        self.assertLess(stop - start, 0.1)
+
+        time.sleep(0.1)
+        # This one must calculate again and take at least 0.1 seconds
+        start = time.time()
+        result3 = sleep_a_bit("hello")
+        stop = time.time()
+        self.assertEqual(result3, 2 * "hello")
+        self.assertGreater(stop - start, 0.1)
 
 class DummyLRUCache(dict):
     def put(self, k, v):
