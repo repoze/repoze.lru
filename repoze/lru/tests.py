@@ -1,5 +1,6 @@
 #!/usr/bin/python -tt
 import random
+import time
 import unittest
 
 
@@ -262,6 +263,193 @@ class LRUCacheTests(unittest.TestCase):
 
         self.check_cache_is_consistent(cache)
 
+
+class ExpiringLRUCacheTests(LRUCacheTests):
+    def _getTargetClass(self):
+        from repoze.lru import LRUCache
+        return ExpiringLRUCache
+
+    def _makeOne(self, size, default_timeout=None):
+        if default_timeout is None:
+            return self._getTargetClass()(size)
+        else:
+            return self._getTargetClass()(size, default_timeout=default_timeout)
+
+    def check_cache_is_consistent(self, cache):
+        """Return if cache is consistent, else raise fail test case.
+
+        This is slightly different for ExpiringLRUCache since self.data
+        contains 3-tuples instead of 2-tuples.
+        """
+        # cache.hand/maxpos/size
+        self.assertLess(cache.hand, len(cache.clock_keys))
+        self.assertGreaterEqual(cache.hand, 0)
+        self.assertEqual(cache.maxpos, cache.size - 1)
+        self.assertEqual(len(cache.clock_keys), cache.size)
+
+        # lengths of data structures
+        self.assertEqual(len(cache.clock_keys), len(cache.clock_refs))
+        self.assertLessEqual(len(cache.data), len(cache.clock_refs))
+
+        # For each item in cache.data
+        #   1. pos must be a valid index
+        #   2. clock_keys must point back to the entry
+        for key, value in cache.data.iteritems():
+            pos, val, timeout = value
+            self.assert_(isinstance(pos, int) or isinstance(pos, long))
+            self.assert_(pos >= 0)
+            self.assert_(pos <= cache.maxpos)
+
+            clock_key = cache.clock_keys[pos]
+            self.assert_(clock_key is key)
+            clock_ref = cache.clock_refs[pos]
+
+            self.assert_(isinstance(timeout, int) or
+                    isinstance(timeout, long) or
+                    isinstance(timeout, float))
+
+        # All clock_refs must be True or False, nothing else.
+        for clock_ref in cache.clock_refs:
+            self.assert_(clock_ref is True or clock_ref is False)
+    def test_it(self):
+        """Test a sequence of operations
+
+        Looks at internal data, which is different for ExpiringLRUCache.
+        """
+        cache = self._makeOne(3)
+        self.assertEqual(cache.get('a'), None)
+
+        cache.put('a', '1')
+        pos, value, expires = cache.data.get('a')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.clock_keys[pos], 'a')
+        self.assertEqual(value, '1')
+        self.assertEqual(cache.get('a'), '1')
+        self.assertEqual(cache.hand, pos + 1)
+
+        pos, value, expires = cache.data.get('a')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.hand, pos + 1)
+        self.assertEqual(len(cache.data), 1)
+
+        cache.put('b', '2')
+        pos, value, expires = cache.data.get('b')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.clock_keys[pos], 'b')
+        self.assertEqual(len(cache.data), 2)
+
+        cache.put('c', '3')
+        pos, value, expires = cache.data.get('c')
+        self.assertEqual(cache.clock_refs[pos], True)
+        self.assertEqual(cache.clock_keys[pos], 'c')
+        self.assertEqual(len(cache.data), 3)
+
+        pos, value, expires = cache.data.get('a')
+        self.assertEqual(cache.clock_refs[pos], True)
+
+        cache.get('a')
+        # All items have ref==True. cache.hand points to "a". Putting
+        # "d" will set ref=False on all items and then replace "a",
+        # because "a" is the first item with ref==False that is found.
+        cache.put('d', '4')
+        self.assertEqual(len(cache.data), 3)
+        self.assertEqual(cache.data.get('a'), None)
+
+        # Only item "d" has ref==True. cache.hand points at "b", so "b"
+        # will be evicted when "e" is inserted. "c" will be left alone.
+        cache.put('e', '5')
+        self.assertEqual(len(cache.data), 3)
+        self.assertEqual(cache.data.get('b'), None)
+        self.assertEqual(cache.get('d'), '4')
+        self.assertEqual(cache.get('e'), '5')
+        self.assertEqual(cache.get('a'), None)
+        self.assertEqual(cache.get('b'), None)
+        self.assertEqual(cache.get('c'), '3')
+
+        self.check_cache_is_consistent(cache)
+
+    def test_default_timeout(self):
+        """Default timeout provided at init time must be applied"""
+        # Provide no default timeout -> entries must remain valid
+        cache = self._makeOne(3)
+        cache.put("foo", "bar")
+
+        time.sleep(0.1)
+        cache.put("FOO", "BAR")
+        self.assertEqual(cache.get("foo"), "bar")
+        self.assertEqual(cache.get("FOO"), "BAR")
+        self.check_cache_is_consistent(cache)
+
+        # Provide short default timeout -> entries must become invalid
+        cache = self._makeOne(3, default_timeout=0.1)
+        cache.put("foo", "bar")
+
+        time.sleep(0.1)
+        cache.put("FOO", "BAR")
+        self.assertEqual(cache.get("foo"), None)
+        self.assertEqual(cache.get("FOO"), "BAR")
+        self.check_cache_is_consistent(cache)
+
+    def test_different_timeouts(self):
+        """Timeouts must be per entry, default applied when none provided"""
+        cache = self._makeOne(3, default_timeout=0.1)
+
+        cache.put("one", 1)
+        cache.put("two", 2, timeout=0.2)
+        cache.put("three", 3, timeout=0.3)
+
+        # All entries still here
+        self.assertEqual(cache.get("one"), 1)
+        self.assertEqual(cache.get("two"), 2)
+        self.assertEqual(cache.get("three"), 3)
+
+        # Entry "one" must expire, "two"/"three" remain valid
+        time.sleep(0.1)
+        self.assertEqual(cache.get("one"), None)
+        self.assertEqual(cache.get("two"), 2)
+        self.assertEqual(cache.get("three"), 3)
+
+        # Only "three" remains valid
+        time.sleep(0.1)
+        self.assertEqual(cache.get("one"), None)
+        self.assertEqual(cache.get("two"), None)
+        self.assertEqual(cache.get("three"), 3)
+
+        # All have expired
+        time.sleep(0.1)
+        self.assertEqual(cache.get("one"), None)
+        self.assertEqual(cache.get("two"), None)
+        self.assertEqual(cache.get("three"), None)
+
+        self.check_cache_is_consistent(cache)
+
+    def test_renew_timeout(self):
+        """Re-putting an entry must update timeout"""
+        cache = self._makeOne(3, default_timeout=0.2)
+
+        cache.put("foo", "bar")
+        cache.put("foo2", "bar2", timeout=10)
+        cache.put("foo3", "bar3", timeout=10)
+
+        time.sleep(0.1)
+        # All must still be here
+        self.assertEqual(cache.get("foo"), "bar")
+        self.assertEqual(cache.get("foo2"), "bar2")
+        self.assertEqual(cache.get("foo3"), "bar3")
+        self.check_cache_is_consistent(cache)
+
+        # Set new timeouts by re-put()ing the entries
+        cache.put("foo", "bar")
+        cache.put("foo2", "bar2", timeout=0.1)
+        cache.put("foo3", "bar3")
+
+        time.sleep(0.1)
+        # "foo2" must have expired
+        self.assertEqual(cache.get("foo"), "bar")
+        self.assertEqual(cache.get("foo2"), None)
+        self.assertEqual(cache.get("foo3"), "bar3")
+        self.check_cache_is_consistent(cache)
+
 class DecoratorTests(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.lru import lru_cache
@@ -300,8 +488,8 @@ class DecoratorTests(unittest.TestCase):
             return args
         decorated = decorator(moreargs)
         result = decorated(3, 4, 5)
-        self.assertEqual(cache[(3,4,5)], (3,4,5))
-        self.assertEqual(result, (3,4,5))
+        self.assertEqual(cache[(3, 4, 5)], (3, 4, 5))
+        self.assertEqual(result, (3, 4, 5))
         self.assertEqual(len(cache), 1)
 
 
