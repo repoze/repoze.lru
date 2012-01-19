@@ -3,6 +3,10 @@ import random
 import time
 import unittest
 
+try:
+    range = xrange
+except NameError: # pragma: no cover
+    pass
 
 class LRUCacheTests(unittest.TestCase):
     def _getTargetClass(self):
@@ -12,21 +16,23 @@ class LRUCacheTests(unittest.TestCase):
     def check_cache_is_consistent(self, cache):
         """Return if cache is consistent, else raise fail test case."""
         # cache.hand/maxpos/size
-        self.assertLess(cache.hand, len(cache.clock_keys))
-        self.assertGreaterEqual(cache.hand, 0)
+        self.assert_(cache.hand < len(cache.clock_keys))
+        self.assert_(cache.hand >= 0)
         self.assertEqual(cache.maxpos, cache.size - 1)
         self.assertEqual(len(cache.clock_keys), cache.size)
 
         # lengths of data structures
         self.assertEqual(len(cache.clock_keys), len(cache.clock_refs))
-        self.assertLessEqual(len(cache.data), len(cache.clock_refs))
+        self.assert_(len(cache.data) <=len(cache.clock_refs))
 
         # For each item in cache.data
         #   1. pos must be a valid index
         #   2. clock_keys must point back to the entry
-        for key, value in cache.data.iteritems():
+        for key, value in cache.data.items():
             pos, val = value
-            self.assert_(isinstance(pos, int) or isinstance(pos, long))
+            self.assert_(
+                    type(pos) == type(42) or
+                    type(pos) == type(2 ** 128))
             self.assert_(pos >= 0)
             self.assert_(pos <= cache.maxpos)
 
@@ -165,10 +171,10 @@ class LRUCacheTests(unittest.TestCase):
         size = 1000
         cache = self._makeOne(size)
 
-        for count in xrange(size):
+        for count in range(size):
             cache.put(count, "item%s" % count)
 
-        for cache_op in xrange(10000):
+        for cache_op in range(10000):
             item = random.randrange(0, size - 1)
             if random.getrandbits(1):
                 self.assertEqual(cache.get(item), "item%s" % item)
@@ -182,13 +188,13 @@ class LRUCacheTests(unittest.TestCase):
         size = 1000
         cache = self._makeOne(size / 2)
 
-        for count in xrange(size):
+        for count in range(size):
             cache.put(count, "item%s" % count)
 
         hits = 0
         misses = 0
         total_gets = 0
-        for cache_op in xrange(10000):
+        for cache_op in range(10000):
             item = random.randrange(0, size - 1)
             if random.getrandbits(1):
                 entry = cache.get(item)
@@ -205,8 +211,8 @@ class LRUCacheTests(unittest.TestCase):
 
         # Cache hit rate should be roughly 50%
         hit_ratio = hits / float(total_gets) * 100
-        self.assertGreater(hit_ratio, 45)
-        self.assertLess(hit_ratio, 55)
+        self.assert_(hit_ratio > 45)
+        self.assert_(hit_ratio < 55)
 
         self.check_cache_is_consistent(cache)
 
@@ -282,21 +288,21 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         contains 3-tuples instead of 2-tuples.
         """
         # cache.hand/maxpos/size
-        self.assertLess(cache.hand, len(cache.clock_keys))
-        self.assertGreaterEqual(cache.hand, 0)
+        self.assert_(cache.hand < len(cache.clock_keys))
+        self.assert_(cache.hand >= 0)
         self.assertEqual(cache.maxpos, cache.size - 1)
         self.assertEqual(len(cache.clock_keys), cache.size)
 
         # lengths of data structures
         self.assertEqual(len(cache.clock_keys), len(cache.clock_refs))
-        self.assertLessEqual(len(cache.data), len(cache.clock_refs))
+        self.assert_(len(cache.data) <= len(cache.clock_refs))
 
         # For each item in cache.data
         #   1. pos must be a valid index
         #   2. clock_keys must point back to the entry
-        for key, value in cache.data.iteritems():
+        for key, value in cache.data.items():
             pos, val, timeout = value
-            self.assert_(isinstance(pos, int) or isinstance(pos, long))
+            self.assert_(type(pos) == type(42) or type(pos) == type(2 ** 128))
             self.assert_(pos >= 0)
             self.assert_(pos <= cache.maxpos)
 
@@ -304,9 +310,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
             self.assert_(clock_key is key)
             clock_ref = cache.clock_refs[pos]
 
-            self.assert_(isinstance(timeout, int) or
-                    isinstance(timeout, long) or
-                    isinstance(timeout, float))
+            self.assert_(type(timeout) == type(3.141))
 
         # All clock_refs must be True or False, nothing else.
         for clock_ref in cache.clock_refs:
@@ -504,14 +508,14 @@ class DecoratorTests(unittest.TestCase):
         result1 = sleep_a_bit("hello")
         stop = time.time()
         self.assertEqual(result1, 2 * "hello")
-        self.assertGreater(stop - start, 0.1)
+        self.assert_(stop - start > 0.1)
 
         # Second call must take less than 0.1 seconds.
         start = time.time()
         result2 = sleep_a_bit("hello")
         stop = time.time()
         self.assertEqual(result2, 2 * "hello")
-        self.assertLess(stop - start, 0.1)
+        self.assert_(stop - start < 0.1)
 
         time.sleep(0.1)
         # This one must calculate again and take at least 0.1 seconds
@@ -519,7 +523,7 @@ class DecoratorTests(unittest.TestCase):
         result3 = sleep_a_bit("hello")
         stop = time.time()
         self.assertEqual(result3, 2 * "hello")
-        self.assertGreater(stop - start, 0.1)
+        self.assert_(stop - start > 0.1)
 
 class DummyLRUCache(dict):
     def put(self, k, v):
