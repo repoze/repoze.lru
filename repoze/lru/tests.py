@@ -529,6 +529,6 @@ class DummyLRUCache(dict):
     def put(self, k, v):
         return self.__setitem__(k, v)
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     unittest.main()
 
