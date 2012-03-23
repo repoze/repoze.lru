@@ -25,13 +25,20 @@ except:
     CHANGES = ''
 
 setup(name='repoze.lru',
-      version='0.4+',
+      version='0.5dev',
       description='A tiny LRU cache implementation and decorator',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
+        "License :: Repoze Public License",
         ],
       keywords='repoze lru cache',
       author="Agendaless Consulting",
@@ -46,6 +53,6 @@ setup(name='repoze.lru',
       install_requires = [],
       test_suite="repoze.lru",
       entry_points = """\
-      """
+      """,
       )
 
