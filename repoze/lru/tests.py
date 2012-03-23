@@ -16,33 +16,33 @@ class LRUCacheTests(unittest.TestCase):
     def check_cache_is_consistent(self, cache):
         """Return if cache is consistent, else raise fail test case."""
         # cache.hand/maxpos/size
-        self.assert_(cache.hand < len(cache.clock_keys))
-        self.assert_(cache.hand >= 0)
+        self.assertTrue(cache.hand < len(cache.clock_keys))
+        self.assertTrue(cache.hand >= 0)
         self.assertEqual(cache.maxpos, cache.size - 1)
         self.assertEqual(len(cache.clock_keys), cache.size)
 
         # lengths of data structures
         self.assertEqual(len(cache.clock_keys), len(cache.clock_refs))
-        self.assert_(len(cache.data) <=len(cache.clock_refs))
+        self.assertTrue(len(cache.data) <=len(cache.clock_refs))
 
         # For each item in cache.data
         #   1. pos must be a valid index
         #   2. clock_keys must point back to the entry
         for key, value in cache.data.items():
             pos, val = value
-            self.assert_(
+            self.assertTrue(
                     type(pos) == type(42) or
                     type(pos) == type(2 ** 128))
-            self.assert_(pos >= 0)
-            self.assert_(pos <= cache.maxpos)
+            self.assertTrue(pos >= 0)
+            self.assertTrue(pos <= cache.maxpos)
 
             clock_key = cache.clock_keys[pos]
-            self.assert_(clock_key is key)
+            self.assertTrue(clock_key is key)
             clock_ref = cache.clock_refs[pos]
 
         # All clock_refs must be True or False, nothing else.
         for clock_ref in cache.clock_refs:
-            self.assert_(clock_ref is True or clock_ref is False)
+            self.assertTrue(clock_ref is True or clock_ref is False)
 
     def _makeOne(self, size):
         return self._getTargetClass()(size)
@@ -199,7 +199,7 @@ class LRUCacheTests(unittest.TestCase):
             if random.getrandbits(1):
                 entry = cache.get(item)
                 total_gets += 1
-                self.assert_(
+                self.assertTrue(
                         (entry == "item%s" % item) or
                         entry is None)
                 if entry is None:
@@ -211,8 +211,8 @@ class LRUCacheTests(unittest.TestCase):
 
         # Cache hit rate should be roughly 50%
         hit_ratio = hits / float(total_gets) * 100
-        self.assert_(hit_ratio > 45)
-        self.assert_(hit_ratio < 55)
+        self.assertTrue(hit_ratio > 45)
+        self.assertTrue(hit_ratio < 55)
 
         self.check_cache_is_consistent(cache)
 
@@ -288,33 +288,34 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         contains 3-tuples instead of 2-tuples.
         """
         # cache.hand/maxpos/size
-        self.assert_(cache.hand < len(cache.clock_keys))
-        self.assert_(cache.hand >= 0)
+        self.assertTrue(cache.hand < len(cache.clock_keys))
+        self.assertTrue(cache.hand >= 0)
         self.assertEqual(cache.maxpos, cache.size - 1)
         self.assertEqual(len(cache.clock_keys), cache.size)
 
         # lengths of data structures
         self.assertEqual(len(cache.clock_keys), len(cache.clock_refs))
-        self.assert_(len(cache.data) <= len(cache.clock_refs))
+        self.assertTrue(len(cache.data) <= len(cache.clock_refs))
 
         # For each item in cache.data
         #   1. pos must be a valid index
         #   2. clock_keys must point back to the entry
         for key, value in cache.data.items():
             pos, val, timeout = value
-            self.assert_(type(pos) == type(42) or type(pos) == type(2 ** 128))
-            self.assert_(pos >= 0)
-            self.assert_(pos <= cache.maxpos)
+            self.assertTrue(
+                type(pos) == type(42) or type(pos) == type(2 ** 128))
+            self.assertTrue(pos >= 0)
+            self.assertTrue(pos <= cache.maxpos)
 
             clock_key = cache.clock_keys[pos]
-            self.assert_(clock_key is key)
+            self.assertTrue(clock_key is key)
             clock_ref = cache.clock_refs[pos]
 
-            self.assert_(type(timeout) == type(3.141))
+            self.assertTrue(type(timeout) == type(3.141))
 
         # All clock_refs must be True or False, nothing else.
         for clock_ref in cache.clock_refs:
-            self.assert_(clock_ref is True or clock_ref is False)
+            self.assertTrue(clock_ref is True or clock_ref is False)
     def test_it(self):
         """Test a sequence of operations
 
@@ -508,14 +509,14 @@ class DecoratorTests(unittest.TestCase):
         result1 = sleep_a_bit("hello")
         stop = time.time()
         self.assertEqual(result1, 2 * "hello")
-        self.assert_(stop - start > 0.1)
+        self.assertTrue(stop - start > 0.1)
 
         # Second call must take less than 0.1 seconds.
         start = time.time()
         result2 = sleep_a_bit("hello")
         stop = time.time()
         self.assertEqual(result2, 2 * "hello")
-        self.assert_(stop - start < 0.1)
+        self.assertTrue(stop - start < 0.1)
 
         time.sleep(0.1)
         # This one must calculate again and take at least 0.1 seconds
@@ -523,7 +524,7 @@ class DecoratorTests(unittest.TestCase):
         result3 = sleep_a_bit("hello")
         stop = time.time()
         self.assertEqual(result3, 2 * "hello")
-        self.assert_(stop - start > 0.1)
+        self.assertTrue(stop - start > 0.1)
 
 class DummyLRUCache(dict):
     def put(self, k, v):
