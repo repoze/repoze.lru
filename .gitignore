@@ -1,4 +1,4 @@
-env26/
+env*/
 *.egg
 *.egg-info
 *.pyc
