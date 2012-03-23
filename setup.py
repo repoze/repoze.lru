@@ -25,7 +25,7 @@ except:
     CHANGES = ''
 
 setup(name='repoze.lru',
-      version='0.4',
+      version='0.4+',
       description='A tiny LRU cache implementation and decorator',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
