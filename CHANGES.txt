@@ -1,8 +1,8 @@
 Changelog
 =========
 
-After 0.4
----------
+0.5 (2012-03-24)
+----------------
 
 - Feature: added a new "invalidate()" method to allow removal of items from
   the cache (issue #8).
@@ -17,7 +17,6 @@ After 0.4
   (Issue #3).
 
 - Bug: LRUCache would evict entries even when not full (Issue #2).
-
 
 0.4 (2011-09-04)
 ----------------
