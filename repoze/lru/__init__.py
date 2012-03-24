@@ -1,4 +1,5 @@
 """ LRU caching class and decorator """
+from __future__ import with_statement
 
 import threading
 import time
@@ -34,8 +35,7 @@ class LRUCache(object):
 
     def clear(self):
         """Remove all entries from the cache"""
-        self.lock.acquire()
-        try:
+        with self.lock:
             # If really clear()ing a full cache, clean up self.data first to
             # give garbage collection a chance to reduce memorey usage.
             # Instantiating "[_MARKER] * size" will temporarily have 2 lists
@@ -47,8 +47,6 @@ class LRUCache(object):
             self.clock_keys = [_MARKER] * size
             self.clock_refs = [False] * size
             self.hand = 0
-        finally:
-            self.lock.release()
 
     def get(self, key, default=None):
         """Return value for key. If not in cache, return default"""
@@ -66,10 +64,8 @@ class LRUCache(object):
         clock_refs = self.clock_refs
         clock_keys = self.clock_keys
         data = self.data
-        lock = self.lock
 
-        lock.acquire()
-        try:
+        with self.lock:
             entry = data.get(key)
             if entry is not None:
                 # We already have key. Only make sure data is up to date and
@@ -111,8 +107,6 @@ class LRUCache(object):
                         hand = 0
                     self.hand = hand
                     break
-        finally:
-            lock.release()
 
     def invalidate(self, key):
         """Remove key from the cache"""
@@ -147,8 +141,7 @@ class ExpiringLRUCache(object):
 
     def clear(self):
         """Remove all entries from the cache"""
-        self.lock.acquire()
-        try:
+        with self.lock:
             # If really clear()ing a full cache, clean up self.data first to
             # give garbage collection a chance to reduce memorey usage.
             # Instantiating "[_MARKER] * size" will temporarily have 2 lists
@@ -161,8 +154,6 @@ class ExpiringLRUCache(object):
             self.clock_keys = [_MARKER] * size
             self.clock_refs = [False] * size
             self.hand = 0
-        finally:
-            self.lock.release()
 
     def get(self, key, default=None):
         """Return value for key. If not in cache or expired, return default"""
@@ -195,8 +186,7 @@ class ExpiringLRUCache(object):
         if timeout is None:
             timeout = self.default_timeout
 
-        lock.acquire()
-        try:
+        with self.lock:
             entry = data.get(key)
             if entry is not None:
                 # We already have key. Only make sure data is up to date and
@@ -237,8 +227,6 @@ class ExpiringLRUCache(object):
                         hand = 0
                     self.hand = hand
                     break
-        finally:
-            lock.release()
 
     def invalidate(self, key):
         """Remove key from the cache"""
