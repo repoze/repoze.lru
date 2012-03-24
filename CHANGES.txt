@@ -4,6 +4,8 @@ Changelog
 After 0.5
 ---------
 
+- Added support for CI under supported Pythons using Tox.
+
 - Bug: Remove potential race condition on lock in face of interrupts
   (Issue #10).
 
