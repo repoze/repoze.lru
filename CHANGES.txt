@@ -1,6 +1,12 @@
 Changelog
 =========
 
+After 0.5
+---------
+
+- Bug: Remove potential race condition on lock in face of interrupts
+  (Issue #10).
+
 0.5 (2012-03-24)
 ----------------
 
