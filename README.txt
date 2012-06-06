@@ -28,6 +28,13 @@ Clearing an LRUCache::
 
   cache.clear()
 
+Obtaining cache statistics:
+
+  cache.lookups     # number of calls to the get method
+  cache.hits        # number of times a call to get found an object
+  cache.misses      # number of times a call to get did not find an object
+  cahce.evictions   # number of times a object was evicted from cache
+
 Decorator
 ---------
 

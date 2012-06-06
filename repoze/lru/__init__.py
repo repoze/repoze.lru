@@ -31,6 +31,10 @@ class LRUCache(object):
         self.clock_keys = None
         self.clock_refs = None
         self.data = None
+        self.evictions = 0
+        self.hits = 0
+        self.misses = 0
+        self.lookups = 0
         self.clear()
 
     def clear(self):
@@ -47,12 +51,19 @@ class LRUCache(object):
             self.clock_keys = [_MARKER] * size
             self.clock_refs = [False] * size
             self.hand = 0
+            self.evictions = 0
+            self.hits = 0
+            self.misses = 0
+            self.lookups = 0
 
     def get(self, key, default=None):
         """Return value for key. If not in cache, return default"""
+        self.lookups += 1
         try:
             pos, val = self.data[key]
+            self.hits += 1
         except KeyError:
+            self.misses += 1
             return default
         self.clock_refs[pos] = True
         return val
@@ -98,7 +109,9 @@ class LRUCache(object):
                     # Maybe oldkey was not in self.data to begin with. If it
                     # was, self.invalidate() in another thread might have
                     # already removed it. del() would raise KeyError, so pop().
-                    data.pop(oldkey, None)
+                    oldentry = data.pop(oldkey, _MARKER)
+                    if oldentry is not _MARKER:
+                        self.evictions += 1
                     clock_keys[hand] = key
                     clock_refs[hand] = True
                     data[key] = (hand, val)
@@ -137,6 +150,10 @@ class ExpiringLRUCache(object):
         self.clock_keys = None
         self.clock_refs = None
         self.data = None
+        self.evictions = 0
+        self.hits = 0
+        self.misses = 0
+        self.lookups = 0
         self.clear()
 
     def clear(self):
@@ -154,20 +171,28 @@ class ExpiringLRUCache(object):
             self.clock_keys = [_MARKER] * size
             self.clock_refs = [False] * size
             self.hand = 0
+            self.evictions = 0
+            self.hits = 0
+            self.misses = 0
+            self.lookups = 0
 
     def get(self, key, default=None):
         """Return value for key. If not in cache or expired, return default"""
+        self.lookups += 1
         try:
             pos, val, expires = self.data[key]
         except KeyError:
+            self.misses += 1
             return default
         if expires > time.time():
             # cache entry still valid
+            self.hits += 1
             self.clock_refs[pos] = True
             return val
         else:
             # cache entry has expired. Make sure the space in the cache can
             # be recycled soon.
+            self.misses += 1
             self.clock_refs[pos] = False
             return default
 
@@ -218,7 +243,9 @@ class ExpiringLRUCache(object):
                     # Maybe oldkey was not in self.data to begin with. If it
                     # was, self.invalidate() in another thread might have
                     # already removed it. del() would raise KeyError, so pop().
-                    data.pop(oldkey, None)
+                    oldentry = data.pop(oldkey, _MARKER)
+                    if oldentry is not _MARKER:
+                        self.evictions += 1
                     clock_keys[hand] = key
                     clock_refs[hand] = True
                     data[key] = (hand, val, time.time() + timeout)
