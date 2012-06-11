@@ -4,7 +4,7 @@ Changelog
 After 0.5
 ---------
 
-- Added ``setup.py docs`` alias (installs ``Sphinx`` and dependenies).
+- Added ``setup.py docs`` alias (installs ``Sphinx`` and dependencies).
 
 - Added ``setup.py dev`` alias (runs ``develop`` plus installs ``nose``
   and ``coverage``).
