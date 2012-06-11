@@ -181,6 +181,9 @@ class LRUCacheTests(unittest.TestCase):
             else:
                 cache.put(item, "item%s" % item)
 
+        self.assertEqual(cache.misses, 0)
+        self.assertEqual(cache.evictions, 0)
+
         self.check_cache_is_consistent(cache)
 
     def test_imperfect_hitrate(self):
@@ -214,7 +217,35 @@ class LRUCacheTests(unittest.TestCase):
         self.assertTrue(hit_ratio > 45)
         self.assertTrue(hit_ratio < 55)
 
+        # The internal cache counters should have the same information
+        internal_hit_ratio = 100 * cache.hits / cache.lookups
+        self.assertTrue(internal_hit_ratio > 45)
+        self.assertTrue(internal_hit_ratio < 55)
+
+        # The internal miss counters should also be around 50%
+        internal_miss_ratio = 100 * cache.misses / cache.lookups
+        self.assertTrue(internal_miss_ratio > 45)
+        self.assertTrue(internal_miss_ratio < 55)
+
         self.check_cache_is_consistent(cache)
+
+    def test_eviction_counter(self):
+        cache = self._makeOne(2)
+        cache.put(1, 1)
+        cache.put(2, 1)
+        self.assertEqual(cache.evictions, 0)
+
+        cache.put(3, 1)
+        cache.put(4, 1)
+        self.assertEqual(cache.evictions, 2)
+
+        cache.put(3, 1)
+        cache.put(4, 1)
+        self.assertEqual(cache.evictions, 2)
+
+        cache.clear()
+        self.assertEqual(cache.evictions, 0)
+
 
     def test_it(self):
         cache = self._makeOne(3)

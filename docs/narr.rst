@@ -39,6 +39,13 @@ Clearing an LRUCache:
 
    >>> cache.clear()
 
+Each LRU cache tracks some basic statistics via attributes:
+
+  cache.lookups     # number of calls to the get method
+  cache.hits        # number of times a call to get found an object
+  cache.misses      # number of times a call to get did not find an object
+  cahce.evictions   # number of times a object was evicted from cache
+
 
 Decorating an "expensive" function call
 ---------------------------------------
