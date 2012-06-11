@@ -24,6 +24,8 @@ except:
     README = ''
     CHANGES = ''
 
+testing_extras = ['nose', 'coverage']
+
 setup(name='repoze.lru',
       version='0.5',
       description='A tiny LRU cache implementation and decorator',
@@ -54,5 +56,8 @@ setup(name='repoze.lru',
       test_suite="repoze.lru",
       entry_points = """\
       """,
-      )
+      extras_require = {
+        'testing':  testing_extras,
+      }
+)
 
