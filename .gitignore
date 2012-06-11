@@ -10,3 +10,4 @@ dist/
 nosetests.xml
 coverage.xml
 repoze/lru/coverage.xml
+docs/_build/*
