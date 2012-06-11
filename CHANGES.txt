@@ -4,6 +4,9 @@ Changelog
 After 0.5
 ---------
 
+- Added statistics to each cache, tracking lookups, hits, misses, and
+  evictions.
+
 - Automated building Sphinx docs and testing example snippets under ``tox``.
 
 - Added Sphinx documentation.
