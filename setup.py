@@ -58,6 +58,7 @@ setup(name='repoze.lru',
       """,
       extras_require = {
         'testing':  testing_extras,
+        'docs':  ['Sphinx',],
       }
 )
 
