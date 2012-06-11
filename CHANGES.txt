@@ -4,6 +4,8 @@ Changelog
 After 0.5
 ---------
 
+- Automated building Sphinx docs and testing example snippets under ``tox``.
+
 - Added Sphinx documentation.
 
 - Dropped support for Python 2.5.
@@ -15,7 +17,7 @@ After 0.5
 - Added ``setup.py dev`` alias (runs ``develop`` plus installs ``nose``
   and ``coverage``).
 
-- Added support for CI under supported Pythons using Tox.
+- Added support for CI under supported Pythons using ``tox``.
 
 - Bug: Remove potential race condition on lock in face of interrupts
   (Issue #10).
