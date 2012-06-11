@@ -4,6 +4,10 @@ Changelog
 After 0.5
 ---------
 
+- Dropped support for Python 2.5.
+
+- Added support for PyPy.
+
 - Added ``setup.py docs`` alias (installs ``Sphinx`` and dependencies).
 
 - Added ``setup.py dev`` alias (runs ``develop`` plus installs ``nose``
