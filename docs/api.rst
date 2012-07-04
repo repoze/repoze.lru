@@ -17,3 +17,7 @@ Module:  :mod:`repoze.lru`
    .. autoclass:: lru_cache
       :members:
       :member-order: bysource
+
+   .. autoclass:: CacheMaker
+      :members:
+      :member-order: bysource
