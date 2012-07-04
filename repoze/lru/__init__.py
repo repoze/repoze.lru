@@ -3,6 +3,7 @@ from __future__ import with_statement
 
 import threading
 import time
+import uuid
 
 try:
     range = xrange
@@ -292,3 +293,72 @@ class lru_cache(object):
         lru_cached.__name__ = f.__name__
         lru_cached.__doc__ = f.__doc__
         return lru_cached
+
+_SENTINEL=_MARKER
+
+class CacheMaker(object):
+    """Generates decorators that can be cleared later
+    """
+    def __init__(self,**default):
+        """ 
+        constructor is accepting named arguments :
+            * maxsize : the default size for the cache
+            * timeout : the defaut size for the cache if using expriring cache
+        """
+        self._maxsize=default.get("maxsize",_SENTINEL)
+        self._timeout=default.get("timeout",_DEFAULT_TIMEOUT)
+        self._cache=dict()
+
+    def _resolve_setting(self,option):
+        name = option.get("name",_SENTINEL)
+        maxsize = option.get("maxsize",_SENTINEL)
+        maxsize = self._maxsize if maxsize is _SENTINEL else maxsize
+        if maxsize is _SENTINEL:
+            raise ValueError("Cache must have a maxsize set")
+        timeout = option.get("timeout",_SENTINEL)
+        timeout = self._timeout if timeout is _SENTINEL else timeout
+        if name is _SENTINEL:
+            _name= str(uuid.uuid4())
+            ## the probability of collision is so low ....
+            while _name in self._cache.keys():
+                _name=str(uuid.uuid4())
+        else:
+            if name in self._cache:
+                raise KeyError("cache %s already in use" % name)
+            _name=name
+
+        return dict( name=_name,timeout=timeout, maxsize=maxsize)
+    
+    def lrucache(self,**option):
+        """named argument:
+            * name (optional) is a string, and should be unique amongst all
+              cache
+            * maxsize : if given will override any default value given at
+            the constructor"""
+        option=self._resolve_setting(option)
+        cache = self._cache[option["name"]] = LRUCache(option['maxsize'])
+        return lru_cache(option['maxsize'], cache)
+
+    def expiring_lrucache(self, **option):
+        """named argument:
+            * name (optional) is a string, and should be unique amongst all
+              cache
+            * maxsize : if given will override any default value given at
+            the constructor
+            * timeout : if given will override any default value given at
+            constructur or the default value (%d seconds)  
+            """ % _DEFAULT_TIMEOUT
+        option=self._resolve_setting(option)
+        cache = self._cache[option['name']]=ExpiringLRUCache(
+                option["maxsize"],option["timeout"]
+            )
+        return lru_cache(option["maxsize"], cache, option["timeout"])
+    
+    def clear(self, name = _SENTINEL):
+        """
+        clear all cache if no arguments, else clear cache with the given name"""
+        to_clear = self._cache.keys() if name is _SENTINEL else [ name ]
+        for cache_name in to_clear:
+            self._cache[cache_name].clear()
+
+
