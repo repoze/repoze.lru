@@ -294,22 +294,24 @@ class lru_cache(object):
         lru_cached.__doc__ = f.__doc__
         return lru_cached
 
-_SENTINEL=_MARKER
+
+_SENTINEL = _MARKER
 
 class CacheMaker(object):
     """Generates decorators that can be cleared later
     """
-    def __init__(self,**default):
-        """ 
-        constructor is accepting named arguments :
-            * maxsize : the default size for the cache
-            * timeout : the defaut size for the cache if using expriring cache
-        """
-        self._maxsize=default.get("maxsize",_SENTINEL)
-        self._timeout=default.get("timeout",_DEFAULT_TIMEOUT)
-        self._cache=dict()
+    def __init__(self, **default):
+        """Accept named arguments:
 
-    def _resolve_setting(self,option):
+        - maxsize : the default size for the cache
+
+        - timeout : the defaut size for the cache if using expriring cache
+        """
+        self._maxsize = default.get("maxsize",_SENTINEL)
+        self._timeout = default.get("timeout",_DEFAULT_TIMEOUT)
+        self._cache = dict()
+
+    def _resolve_setting(self, option):
         name = option.get("name",_SENTINEL)
         maxsize = option.get("maxsize",_SENTINEL)
         maxsize = self._maxsize if maxsize is _SENTINEL else maxsize
@@ -321,44 +323,48 @@ class CacheMaker(object):
             _name= str(uuid.uuid4())
             ## the probability of collision is so low ....
             while _name in self._cache.keys():
-                _name=str(uuid.uuid4()) #pragma NO COVER
+                _name = str(uuid.uuid4()) #pragma NO COVER
         else:
             if name in self._cache:
                 raise KeyError("cache %s already in use" % name)
-            _name=name
+            _name = name
 
-        return dict( name=_name,timeout=timeout, maxsize=maxsize)
+        return dict(name=_name, timeout=timeout, maxsize=maxsize)
     
-    def lrucache(self,**option):
-        """named argument:
-            * name (optional) is a string, and should be unique amongst all
-              cache
-            * maxsize : if given will override any default value given at
-            the constructor"""
-        option=self._resolve_setting(option)
+    def lrucache(self, **option):
+        """Named arguments:
+        
+        - name (optional) is a string, and should be unique amongst all caches
+
+        - maxsize (optional) is an int, overriding any default value set by
+          the constructor
+        """
+        option = self._resolve_setting(option)
         cache = self._cache[option["name"]] = LRUCache(option['maxsize'])
         return lru_cache(option['maxsize'], cache)
 
     def expiring_lrucache(self, **option):
-        """named argument:
-            * name (optional) is a string, and should be unique amongst all
-              cache
-            * maxsize : if given will override any default value given at
-            the constructor
-            * timeout : if given will override any default value given at
-            constructur or the default value (%d seconds)  
-            """ % _DEFAULT_TIMEOUT
-        option=self._resolve_setting(option)
-        cache = self._cache[option['name']]=ExpiringLRUCache(
+        """Named arguments:
+
+        - name (optional) is a string, and should be unique amongst all caches
+
+        - maxsize (optional) is an int, overriding any default value set by
+          the constructor
+
+        - timeout (optional) is an int, overriding any default value set by
+          the constructor or the default value (%d seconds)  
+        """ % _DEFAULT_TIMEOUT
+        option = self._resolve_setting(option)
+        cache = self._cache[option['name']] = ExpiringLRUCache(
                 option["maxsize"],option["timeout"]
             )
         return lru_cache(option["maxsize"], cache, option["timeout"])
     
-    def clear(self, name = _SENTINEL):
+    def clear(self, name=_SENTINEL):
+        """Clear the given cache.
+        
+        If 'name' is not passed, clear all caches.
         """
-        clear all cache if no arguments, else clear cache with the given name"""
         to_clear = self._cache.keys() if name is _SENTINEL else [ name ]
         for cache_name in to_clear:
             self._cache[cache_name].clear()
-
-
