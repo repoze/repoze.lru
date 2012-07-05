@@ -321,7 +321,7 @@ class CacheMaker(object):
             _name= str(uuid.uuid4())
             ## the probability of collision is so low ....
             while _name in self._cache.keys():
-                _name=str(uuid.uuid4())
+                _name=str(uuid.uuid4()) #pragma NO COVER
         else:
             if name in self._cache:
                 raise KeyError("cache %s already in use" % name)
