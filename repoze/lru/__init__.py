@@ -5,15 +5,12 @@ import threading
 import time
 import uuid
 
-try:
-    range = xrange
-except NameError: # pragma: no cover
-    pass
 
 _MARKER = object()
 # By default, expire items after 2**60 seconds. This fits into 64 bit
 # integers and is close enough to "never" for practical purposes.
 _DEFAULT_TIMEOUT = 2 ** 60
+
 
 class LRUCache(object):
     """ Implements a pseudo-LRU algorithm (CLOCK)
@@ -265,6 +262,7 @@ class ExpiringLRUCache(object):
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
         # else: key was not in cache. Nothing to do.
+
 
 class lru_cache(object):
     """ Decorator for LRU-cached function
