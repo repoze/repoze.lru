@@ -1,11 +1,10 @@
-#!/usr/bin/python -tt
 import random
 import time
 import unittest
 
 try:
     range = xrange
-except NameError: # pragma: no cover
+except NameError: # pragma: NO COVER  (Python3)
     pass
 
 
@@ -568,6 +567,7 @@ class DummyLRUCache(dict):
 
     def put(self, k, v):
         return self.__setitem__(k, v)
+
 
 class CacherMaker(unittest.TestCase):
 
