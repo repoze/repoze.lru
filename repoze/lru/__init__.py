@@ -298,20 +298,18 @@ class lru_cache(object):
 class CacheMaker(object):
     """Generates decorators that can be cleared later
     """
-    def __init__(self, **default):
-        """Accept named arguments:
+    def __init__(self, maxsize=None, timeout=_DEFAULT_TIMEOUT):
+        """Create cache decorator factory.
 
-        - maxsize : the default size for the cache
+        - maxsize : the default size for created caches.
 
-        - timeout : the defaut size for the cache if using expriring cache
+        - timeout : the defaut expiraiton time for created caches.
         """
-        self._maxsize = default.get("maxsize")
-        self._timeout = default.get("timeout", _DEFAULT_TIMEOUT)
+        self._maxsize = maxsize
+        self._timeout = timeout
         self._cache = {}
 
-    def _resolve_setting(self, options):
-        name = options.get("name")
-
+    def _resolve_setting(self, name=None, maxsize=None, timeout=None):
         if name is None:
             while True:
                 name = str(uuid.uuid4())
@@ -322,14 +320,18 @@ class CacheMaker(object):
         if name in self._cache:
             raise KeyError("cache %s already in use" % name)
 
-        maxsize = options.get("maxsize", self._maxsize)
+        if maxsize is None:
+            maxsize = self._maxsize
+
         if maxsize is None:
             raise ValueError("Cache must have a maxsize set")
-        timeout = options.get("timeout", self._timeout)
 
-        return dict(name=name, timeout=timeout, maxsize=maxsize)
+        if timeout is None:
+            timeout = self._timeout
+
+        return name, maxsize, timeout
     
-    def lrucache(self, **options):
+    def lrucache(self, name=None, maxsize=None):
         """Named arguments:
         
         - name (optional) is a string, and should be unique amongst all caches
@@ -337,11 +339,11 @@ class CacheMaker(object):
         - maxsize (optional) is an int, overriding any default value set by
           the constructor
         """
-        options = self._resolve_setting(options)
-        cache = self._cache[options["name"]] = LRUCache(options['maxsize'])
-        return lru_cache(options['maxsize'], cache)
+        name, maxsize, _ = self._resolve_setting(name, maxsize)
+        cache = self._cache[name] = LRUCache(maxsize)
+        return lru_cache(maxsize, cache)
 
-    def expiring_lrucache(self, **options):
+    def expiring_lrucache(self, name=None, maxsize=None, timeout=None):
         """Named arguments:
 
         - name (optional) is a string, and should be unique amongst all caches
@@ -352,10 +354,9 @@ class CacheMaker(object):
         - timeout (optional) is an int, overriding any default value set by
           the constructor or the default value (%d seconds)  
         """ % _DEFAULT_TIMEOUT
-        options = self._resolve_setting(options)
-        cache = self._cache[options['name']] = ExpiringLRUCache(
-                options["maxsize"], options["timeout"])
-        return lru_cache(options["maxsize"], cache, options["timeout"])
+        name, maxsize, timeout = self._resolve_setting(name, maxsize, timeout)
+        cache = self._cache[name] = ExpiringLRUCache(maxsize, timeout)
+        return lru_cache(maxsize, cache, timeout)
     
     def clear(self, name=None):
         """Clear the given cache.
