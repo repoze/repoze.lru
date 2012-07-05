@@ -358,15 +358,13 @@ class CacheMaker(object):
         cache = self._cache[name] = ExpiringLRUCache(maxsize, timeout)
         return lru_cache(maxsize, cache, timeout)
     
-    def clear(self, name=None):
-        """Clear the given cache.
+    def clear(self, *names):
+        """Clear the given cache(s).
         
-        If 'name' is not passed, clear all caches.
+        If no 'names' are passed, clear all caches.
         """
-        if name is None:
-            to_clear = self._cache.keys()
-        else:
-            to_clear = [name]
+        if len(names) == 0:
+            names = self._cache.keys()
 
-        for cache_name in to_clear:
-            self._cache[cache_name].clear()
+        for name in names:
+            self._cache[name].clear()
