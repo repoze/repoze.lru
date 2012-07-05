@@ -295,8 +295,6 @@ class lru_cache(object):
         return lru_cached
 
 
-_SENTINEL = _MARKER
-
 class CacheMaker(object):
     """Generates decorators that can be cleared later
     """
@@ -307,19 +305,19 @@ class CacheMaker(object):
 
         - timeout : the defaut size for the cache if using expriring cache
         """
-        self._maxsize = default.get("maxsize",_SENTINEL)
-        self._timeout = default.get("timeout",_DEFAULT_TIMEOUT)
-        self._cache = dict()
+        self._maxsize = default.get("maxsize")
+        self._timeout = default.get("timeout")
+        self._cache = {}
 
     def _resolve_setting(self, option):
-        name = option.get("name",_SENTINEL)
-        maxsize = option.get("maxsize",_SENTINEL)
-        maxsize = self._maxsize if maxsize is _SENTINEL else maxsize
-        if maxsize is _SENTINEL:
+        name = option.get("name")
+        maxsize = option.get("maxsize")
+        maxsize = self._maxsize if maxsize is None else maxsize
+        if maxsize is None:
             raise ValueError("Cache must have a maxsize set")
-        timeout = option.get("timeout",_SENTINEL)
-        timeout = self._timeout if timeout is _SENTINEL else timeout
-        if name is _SENTINEL:
+        timeout = option.get("timeout")
+        timeout = self._timeout if timeout is None else timeout
+        if name is None:
             _name= str(uuid.uuid4())
             ## the probability of collision is so low ....
             while _name in self._cache.keys():
@@ -360,11 +358,11 @@ class CacheMaker(object):
             )
         return lru_cache(option["maxsize"], cache, option["timeout"])
     
-    def clear(self, name=_SENTINEL):
+    def clear(self, name=None):
         """Clear the given cache.
         
         If 'name' is not passed, clear all caches.
         """
-        to_clear = self._cache.keys() if name is _SENTINEL else [ name ]
+        to_clear = self._cache.keys() if name is None else [ name ]
         for cache_name in to_clear:
             self._cache[cache_name].clear()
