@@ -8,7 +8,9 @@ try:
 except NameError: # pragma: no cover
     pass
 
+
 class LRUCacheTests(unittest.TestCase):
+
     def _getTargetClass(self):
         from repoze.lru import LRUCache
         return LRUCache
@@ -302,6 +304,7 @@ class LRUCacheTests(unittest.TestCase):
 
 
 class ExpiringLRUCacheTests(LRUCacheTests):
+
     def _getTargetClass(self):
         from repoze.lru import ExpiringLRUCache
         return ExpiringLRUCache
@@ -347,6 +350,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         # All clock_refs must be True or False, nothing else.
         for clock_ref in cache.clock_refs:
             self.assertTrue(clock_ref is True or clock_ref is False)
+
     def test_it(self):
         """Test a sequence of operations
 
@@ -486,6 +490,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         self.assertEqual(cache.get("foo3"), "bar3")
         self.check_cache_is_consistent(cache)
 
+
 class DecoratorTests(unittest.TestCase):
     def _getTargetClass(self):
         from repoze.lru import lru_cache
@@ -557,18 +562,19 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result3, 2 * "hello")
         self.assertTrue(stop - start > 0.1)
 
+
 class DummyLRUCache(dict):
+
     def put(self, k, v):
         return self.__setitem__(k, v)
 
 class CacherMaker(unittest.TestCase):
+
     def setUp(self):
         self.adder=lambda x : x+10
         from ..lru import CacheMaker
         self.cache_maker=CacheMaker
 
-
-        
     def test_named_cache(self):
         cache=self.cache_maker()
         size=10
@@ -590,14 +596,13 @@ class CacherMaker(unittest.TestCase):
         with self.assertRaises(ValueError):
             cache.lrucache()
 
-        
     def test_defaultvalue_and_clear(self):
         size=10
         cache=self.cache_maker(maxsize=size)
         for i in range(100):
             decorated=cache.lrucache()(self.adder)
             decorated(10)
-        
+
         self.assertEqual( len(cache._cache) , 100)
         for _cache in cache._cache.values():
             self.assertEqual( _cache.size,size)
@@ -607,7 +612,7 @@ class CacherMaker(unittest.TestCase):
         for _cache in cache._cache.values():
             self.assertEqual( _cache.size,size)
             self.assertEqual(len(_cache.data),0)
-   
+
     def test_expiring(self):
         size=10
         timeout=10
@@ -620,7 +625,7 @@ class CacherMaker(unittest.TestCase):
             else:
                 decorated=cache.expiring_lrucache()(self.adder)
             decorated(10)
-        
+
         self.assertEqual( len(cache._cache) , 100)
         for _cache in cache._cache.values():
             self.assertEqual( _cache.size,size)
@@ -631,5 +636,3 @@ class CacherMaker(unittest.TestCase):
         for _cache in cache._cache.values():
             self.assertEqual( _cache.size,size)
             self.assertEqual(len(_cache.data),0)
-
-        
