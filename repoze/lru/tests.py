@@ -492,6 +492,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
 
 
 class DecoratorTests(unittest.TestCase):
+
     def _getTargetClass(self):
         from repoze.lru import lru_cache
         return lru_cache
@@ -570,27 +571,29 @@ class DummyLRUCache(dict):
 
 class CacherMaker(unittest.TestCase):
 
-    def setUp(self):
-        self.adder = lambda x : x+10
-        from ..lru import CacheMaker
-        self.cache_maker = CacheMaker
+    def _getTargetClass(self):
+        from repoze.lru import CacheMaker
+        return CacheMaker
+
+    def _makeOne(self, *args, **kw):
+        return self._getTargetClass()(*args, **kw)
 
     def test_named_cache(self):
-        cache = self.cache_maker()
+        cache = self._makeOne()
         size = 10
         name = "name"
-        decorated = cache.lrucache(maxsize=size, name=name)(self.adder)
-        self.assertEqual( cache._cache.keys() , [ name ])
-        self.assertEqual( cache._cache[name].size,size)
+        decorated = cache.lrucache(maxsize=size, name=name)(_adder)
+        self.assertEqual(cache._cache.keys(), [name])
+        self.assertEqual(cache._cache[name].size, size)
         decorated(10)
         decorated(11)
         self.assertEqual(len(cache._cache[name].data),2)
 
-    def test_excpetion(self):
-        cache = self.cache_maker()
+    def test_exception(self):
+        cache = self._makeOne()
         size = 10
         name = "name"
-        decorated = cache.lrucache(maxsize=size, name=name)(self.adder)
+        decorated = cache.lrucache(maxsize=size, name=name)(_adder)
         with self.assertRaises(KeyError):
             cache.lrucache(maxsize=size,name= name)
         with self.assertRaises(ValueError):
@@ -598,9 +601,9 @@ class CacherMaker(unittest.TestCase):
 
     def test_defaultvalue_and_clear(self):
         size = 10
-        cache = self.cache_maker(maxsize=size)
+        cache = self._makeOne(maxsize=size)
         for i in range(100):
-            decorated = cache.lrucache()(self.adder)
+            decorated = cache.lrucache()(_adder)
             decorated(10)
 
         self.assertEqual( len(cache._cache) , 100)
@@ -617,13 +620,13 @@ class CacherMaker(unittest.TestCase):
         size = 10
         timeout = 10
         name = "name"
-        cache = self.cache_maker(maxsize=size,timeout=timeout)
+        cache = self._makeOne(maxsize=size, timeout=timeout)
         for i in range(100):
             if not i:
-                decorated = cache.expiring_lrucache(name=name)(self.adder)
+                decorated = cache.expiring_lrucache(name=name)(_adder)
                 self.assertEqual( cache._cache[name].size,size)
             else:
-                decorated = cache.expiring_lrucache()(self.adder)
+                decorated = cache.expiring_lrucache()(_adder)
             decorated(10)
 
         self.assertEqual( len(cache._cache) , 100)
@@ -636,3 +639,6 @@ class CacherMaker(unittest.TestCase):
         for _cache in cache._cache.values():
             self.assertEqual( _cache.size,size)
             self.assertEqual(len(_cache.data),0)
+
+def _adder(x):
+    return x + 10
