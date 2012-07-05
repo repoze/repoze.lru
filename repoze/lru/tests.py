@@ -594,10 +594,8 @@ class CacherMaker(unittest.TestCase):
         size = 10
         name = "name"
         decorated = cache.lrucache(maxsize=size, name=name)(_adder)
-        with self.assertRaises(KeyError):
-            cache.lrucache(maxsize=size,name= name)
-        with self.assertRaises(ValueError):
-            cache.lrucache()
+        self.assertRaises(KeyError, cache.lrucache, maxsize=size, name=name)
+        self.assertRaises(ValueError, cache.lrucache)
 
     def test_defaultvalue_and_clear(self):
         size = 10
