@@ -583,7 +583,7 @@ class CacherMaker(unittest.TestCase):
         size = 10
         name = "name"
         decorated = cache.lrucache(maxsize=size, name=name)(_adder)
-        self.assertEqual(cache._cache.keys(), [name])
+        self.assertEqual(list(cache._cache.keys()), [name])
         self.assertEqual(cache._cache[name].size, size)
         decorated(10)
         decorated(11)
