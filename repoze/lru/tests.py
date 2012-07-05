@@ -579,40 +579,53 @@ class CacherMaker(unittest.TestCase):
         return self._getTargetClass()(*args, **kw)
 
     def test_named_cache(self):
-        cache = self._makeOne()
+        maker = self._makeOne()
         size = 10
         name = "name"
-        decorated = cache.lrucache(maxsize=size, name=name)(_adder)
-        self.assertEqual(list(cache._cache.keys()), [name])
-        self.assertEqual(cache._cache[name].size, size)
+        decorated = maker.lrucache(maxsize=size, name=name)(_adder)
+        self.assertEqual(list(maker._cache.keys()), [name])
+        self.assertEqual(maker._cache[name].size, size)
         decorated(10)
         decorated(11)
-        self.assertEqual(len(cache._cache[name].data),2)
+        self.assertEqual(len(maker._cache[name].data),2)
 
     def test_exception(self):
-        cache = self._makeOne()
+        maker = self._makeOne()
         size = 10
         name = "name"
-        decorated = cache.lrucache(maxsize=size, name=name)(_adder)
-        self.assertRaises(KeyError, cache.lrucache, maxsize=size, name=name)
-        self.assertRaises(ValueError, cache.lrucache)
+        decorated = maker.lrucache(maxsize=size, name=name)(_adder)
+        self.assertRaises(KeyError, maker.lrucache, maxsize=size, name=name)
+        self.assertRaises(ValueError, maker.lrucache)
 
     def test_defaultvalue_and_clear(self):
         size = 10
-        cache = self._makeOne(maxsize=size)
+        maker = self._makeOne(maxsize=size)
         for i in range(100):
-            decorated = cache.lrucache()(_adder)
+            decorated = maker.lrucache()(_adder)
             decorated(10)
 
-        self.assertEqual( len(cache._cache) , 100)
-        for _cache in cache._cache.values():
+        self.assertEqual(len(maker._cache) , 100)
+        for _cache in maker._cache.values():
             self.assertEqual( _cache.size,size)
             self.assertEqual(len(_cache.data),1)
         ## and test clear cache
-        cache.clear()
-        for _cache in cache._cache.values():
+        maker.clear()
+        for _cache in maker._cache.values():
             self.assertEqual( _cache.size,size)
             self.assertEqual(len(_cache.data),0)
+
+    def test_clear_with_single_name(self):
+        maker = self._makeOne(maxsize=10)
+        one = maker.lrucache(name='one')(_adder)
+        two = maker.lrucache(name='two')(_adder)
+        for i in range(100):
+            _ = one(i)
+            _ = two(i)
+        self.assertEqual(len(maker._cache['one'].data), 10)
+        self.assertEqual(len(maker._cache['two'].data), 10)
+        maker.clear('one')
+        self.assertEqual(len(maker._cache['one'].data), 0)
+        self.assertEqual(len(maker._cache['two'].data), 10)
 
     def test_expiring(self):
         size = 10
