@@ -290,6 +290,7 @@ class lru_cache(object):
         lru_cached.__module__ = f.__module__
         lru_cached.__name__ = f.__name__
         lru_cached.__doc__ = f.__doc__
+        lru_cached._cache = cache
         return lru_cached
 
 
