@@ -562,6 +562,16 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result3, 2 * "hello")
         self.assertTrue(stop - start > 0.1)
 
+    def test_partial(self):
+        """lru_cache decorator must not crash on functools.partial instances"""
+        def add(a,b):
+            return a + b
+        from functools import partial
+        from repoze.lru import lru_cache
+        add_five = partial(add, 5)
+        decorated = lru_cache(20)(add_five)
+        self.assertEqual(decorated(3), 8)
+
 
 class DummyLRUCache(dict):
 

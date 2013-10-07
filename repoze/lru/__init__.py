@@ -287,9 +287,14 @@ class lru_cache(object):
                 val = f(*arg)
                 cache.put(arg, val)
             return val
-        lru_cached.__module__ = f.__module__
-        lru_cached.__name__ = f.__name__
-        lru_cached.__doc__ = f.__doc__
+        try:
+            lru_cached.__module__ = f.__module__
+            lru_cached.__name__ = f.__name__
+            lru_cached.__doc__ = f.__doc__
+        except AttributeError:
+            # functools.partial objects don't have __module__ or __name__.
+            # Ignore.
+            pass
         return lru_cached
 
 
