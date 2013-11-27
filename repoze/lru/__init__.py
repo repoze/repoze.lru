@@ -281,12 +281,15 @@ class lru_cache(object):
     def __call__(self, f):
         cache = self.cache
         marker = _MARKER
-        def lru_cached(*arg):
-            val = cache.get(arg, marker)
+        def lru_cached(*arg, **kw):
+            val    = cache.get(arg, marker)
+            ff_ret = None
             if val is marker:
-                val = f(*arg)
+                val = f(*arg, **kw)
                 cache.put(arg, val)
-            return val
+            else:
+                ff_ret = val
+            return ff_ret
         lru_cached.__module__ = f.__module__
         lru_cached.__name__ = f.__name__
         lru_cached.__doc__ = f.__doc__
