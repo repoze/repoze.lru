@@ -15,7 +15,7 @@ class LRUCacheTests(unittest.TestCase):
         return LRUCache
 
     def check_cache_is_consistent(self, cache):
-        """Return if cache is consistent, else raise fail test case."""
+        #Return if cache is consistent, else raise fail test case.
         # cache.hand/maxpos/size
         self.assertTrue(cache.hand < len(cache.clock_keys))
         self.assertTrue(cache.hand >= 0)
@@ -118,7 +118,7 @@ class LRUCacheTests(unittest.TestCase):
         self.check_cache_is_consistent(cache)
 
     def test_small_cache(self):
-        """Cache of size 1 must work"""
+        #Cache of size 1 must work
         cache = self._makeOne(1)
 
         cache.put("foo", "bar")
@@ -151,7 +151,7 @@ class LRUCacheTests(unittest.TestCase):
         self.assertEqual(cache.get("foo"), None)
 
     def test_equal_but_not_identical(self):
-        """equal but not identical keys must be treated the same"""
+        #equal but not identical keys must be treated the same
         cache = self._makeOne(1)
         tuple_one = (1, 1)
         tuple_two = (1, 1)
@@ -168,7 +168,7 @@ class LRUCacheTests(unittest.TestCase):
         self.assertEqual(cache.get(tuple_two), None)
 
     def test_perfect_hitrate(self):
-        """If cache size equals number of items, expect 100% cache hits"""
+        #If cache size equals number of items, expect 100% cache hits
         size = 1000
         cache = self._makeOne(size)
 
@@ -188,7 +188,7 @@ class LRUCacheTests(unittest.TestCase):
         self.check_cache_is_consistent(cache)
 
     def test_imperfect_hitrate(self):
-        """If cache size == half the number of items -> hit rate ~50%"""
+        #If cache size == half the number of items -> hit rate ~50%
         size = 1000
         cache = self._makeOne(size / 2)
 
@@ -315,11 +315,10 @@ class ExpiringLRUCacheTests(LRUCacheTests):
             return self._getTargetClass()(size, default_timeout=default_timeout)
 
     def check_cache_is_consistent(self, cache):
-        """Return if cache is consistent, else raise fail test case.
-
-        This is slightly different for ExpiringLRUCache since self.data
-        contains 3-tuples instead of 2-tuples.
-        """
+        #Return if cache is consistent, else raise fail test case.
+        #
+        #This is slightly different for ExpiringLRUCache since self.data
+        #contains 3-tuples instead of 2-tuples.
         # cache.hand/maxpos/size
         self.assertTrue(cache.hand < len(cache.clock_keys))
         self.assertTrue(cache.hand >= 0)
@@ -351,10 +350,9 @@ class ExpiringLRUCacheTests(LRUCacheTests):
             self.assertTrue(clock_ref is True or clock_ref is False)
 
     def test_it(self):
-        """Test a sequence of operations
-
-        Looks at internal data, which is different for ExpiringLRUCache.
-        """
+        #Test a sequence of operations
+        #
+        # Looks at internal data, which is different for ExpiringLRUCache.
         cache = self._makeOne(3)
         self.assertEqual(cache.get('a'), None)
 
@@ -408,7 +406,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         self.check_cache_is_consistent(cache)
 
     def test_default_timeout(self):
-        """Default timeout provided at init time must be applied"""
+        #Default timeout provided at init time must be applied.
         # Provide no default timeout -> entries must remain valid
         cache = self._makeOne(3)
         cache.put("foo", "bar")
@@ -430,7 +428,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         self.check_cache_is_consistent(cache)
 
     def test_different_timeouts(self):
-        """Timeouts must be per entry, default applied when none provided"""
+        #Timeouts must be per entry, default applied when none provided
         cache = self._makeOne(3, default_timeout=0.1)
 
         cache.put("one", 1)
@@ -463,7 +461,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         self.check_cache_is_consistent(cache)
 
     def test_renew_timeout(self):
-        """Re-putting an entry must update timeout"""
+        #Re-putting an entry must update timeout
         cache = self._makeOne(3, default_timeout=0.2)
 
         cache.put("foo", "bar")
@@ -534,7 +532,7 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(len(cache), 1)
 
     def test_expiry(self):
-        """When timeout is given, decorator must eventually forget entries"""
+        #When timeout is given, decorator must eventually forget entries
         @self._makeOne(1, None, timeout=0.1)
         def sleep_a_bit(param):
             time.sleep(0.1)
@@ -563,7 +561,7 @@ class DecoratorTests(unittest.TestCase):
         self.assertTrue(stop - start > 0.1)
 
     def test_partial(self):
-        """lru_cache decorator must not crash on functools.partial instances"""
+        #lru_cache decorator must not crash on functools.partial instances
         def add(a,b):
             return a + b
         from functools import partial
