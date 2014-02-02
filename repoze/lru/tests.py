@@ -523,10 +523,10 @@ class DecoratorTests(unittest.TestCase):
     def test_cache_attr(self):
         cache = DummyLRUCache()
         decorator = self._makeOne(0, cache)
-        def wrapped(key):
+        def wrapped(key): #pragma NO COVER
             return key
         decorated = decorator(wrapped)
-        self.assertEqual(decorated._cache, cache)
+        self.assertTrue(decorated._cache is cache)
 
     def test_multiargs(self):
         cache = DummyLRUCache()
