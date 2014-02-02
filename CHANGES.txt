@@ -4,6 +4,9 @@ Changelog
 After 0.6
 ---------
 
+- Expose cache object on the wrapped function, e.g. to allow extracting cache
+  performance data easily (PR #20).
+
 - Avoid crash when memoizing a ``functools.partial`` instance (PR #21).
 
 - Added explicit support for Python 3.3.
