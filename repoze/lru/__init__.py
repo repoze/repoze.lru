@@ -287,14 +287,13 @@ class lru_cache(object):
                 val = f(*arg)
                 cache.put(arg, val)
             return val
-        try:
-            lru_cached.__module__ = f.__module__
-            lru_cached.__name__ = f.__name__
-            lru_cached.__doc__ = f.__doc__
-        except AttributeError:
-            # functools.partial objects don't have __module__ or __name__.
-            # Ignore.
-            pass
+        def _maybe_copy(source, target, attr):
+            value = getattr(source, attr, source)
+            if value is not source:
+                setattr(target, attr, value)
+        _maybe_copy(f, lru_cached, '__module__')
+        _maybe_copy(f, lru_cached, '__name__')
+        _maybe_copy(f, lru_cached, '__doc__')
         return lru_cached
 
 
