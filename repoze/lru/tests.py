@@ -520,6 +520,14 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result, 2)
         self.assertEqual(len(cache), 2)
 
+    def test_cache_attr(self):
+        cache = DummyLRUCache()
+        decorator = self._makeOne(0, cache)
+        def wrapped(key):
+            return key
+        decorated = decorator(wrapped)
+        self.assertEqual(decorated._cache, cache)
+
     def test_multiargs(self):
         cache = DummyLRUCache()
         decorator = self._makeOne(0, cache)

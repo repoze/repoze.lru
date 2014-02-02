@@ -294,6 +294,7 @@ class lru_cache(object):
         _maybe_copy(f, lru_cached, '__module__')
         _maybe_copy(f, lru_cached, '__name__')
         _maybe_copy(f, lru_cached, '__doc__')
+        lru_cached._cache = cache
         return lru_cached
 
 
