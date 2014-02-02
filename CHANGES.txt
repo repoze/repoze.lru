@@ -4,6 +4,8 @@ Changelog
 After 0.6
 ---------
 
+- Avoid crash when memoizing a ``functools.partial`` instance (PR #21).
+
 - Added explicit support for Python 3.3.
 
 0.6 (2012-07-12)
