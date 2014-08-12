@@ -170,7 +170,7 @@ class LRUCache(Cache):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-            # else: key was not in cache. Nothing to do.
+        # else: key was not in cache. Nothing to do.
 
 
 class ExpiringLRUCache(Cache):
@@ -305,7 +305,7 @@ class ExpiringLRUCache(Cache):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-            # else: key was not in cache. Nothing to do.
+        # else: key was not in cache. Nothing to do.
 
 
 class lru_cache(object):
