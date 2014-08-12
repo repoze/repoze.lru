@@ -1,5 +1,6 @@
 """ LRU caching class and decorator """
 from __future__ import with_statement
+from abc import ABCMeta, abstractmethod
 
 import threading
 import time
@@ -12,12 +13,54 @@ _MARKER = object()
 _DEFAULT_TIMEOUT = 2 ** 60
 
 
-class LRUCache(object):
+class Cache(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def clear(self):
+        pass
+
+    @abstractmethod
+    def get(self, key, default=None):
+        pass
+
+    @abstractmethod
+    def put(self, key, val):
+        pass
+
+    @abstractmethod
+    def invalidate(self, key):
+        pass
+
+
+class UnboundedCache(Cache):
+    """
+    a simple unbounded cache backed by a dictionary
+    """
+
+    def __init__(self):
+        self._data = dict()
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def clear(self):
+        self._data.clear()
+
+    def invalidate(self, key):
+        pass
+
+    def put(self, key, val):
+        self._data[key] = val
+
+
+class LRUCache(Cache):
     """ Implements a pseudo-LRU algorithm (CLOCK)
 
     The Clock algorithm is not kept strictly to improve performance, e.g. to
     allow get() and invalidate() to work without acquiring the lock.
     """
+
     def __init__(self, size):
         size = int(size)
         if size < 1:
@@ -127,15 +170,16 @@ class LRUCache(object):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-        # else: key was not in cache. Nothing to do.
+            # else: key was not in cache. Nothing to do.
 
 
-class ExpiringLRUCache(object):
+class ExpiringLRUCache(Cache):
     """ Implements a pseudo-LRU algorithm (CLOCK) with expiration times
 
     The Clock algorithm is not kept strictly to improve performance, e.g. to
     allow get() and invalidate() to work without acquiring the lock.
     """
+
     def __init__(self, size, default_timeout=_DEFAULT_TIMEOUT):
         self.default_timeout = default_timeout
         size = int(size)
@@ -261,7 +305,7 @@ class ExpiringLRUCache(object):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-        # else: key was not in cache. Nothing to do.
+            # else: key was not in cache. Nothing to do.
 
 
 class lru_cache(object):
@@ -270,37 +314,45 @@ class lru_cache(object):
     timeout parameter specifies after how many seconds a cached entry should
     be considered invalid.
     """
-    def __init__(self, maxsize, cache=None, timeout=None): # cache is an arg to serve tests
+
+    def __init__(self, maxsize, cache=None, timeout=None):  # cache is an arg to serve tests
         if cache is None:
-            if timeout is None:
+            if maxsize is None:
+                cache = UnboundedCache()
+            elif timeout is None:
                 cache = LRUCache(maxsize)
             else:
                 cache = ExpiringLRUCache(maxsize, default_timeout=timeout)
         self.cache = cache
 
-    def __call__(self, f):
+    def __call__(self, func):
         cache = self.cache
         marker = _MARKER
-        def lru_cached(*arg):
-            val = cache.get(arg, marker)
+
+        def cached_wrapper(*args, **kwargs):
+            key = (args, frozenset(kwargs.items()))
+            val = cache.get(key, marker)
             if val is marker:
-                val = f(*arg)
-                cache.put(arg, val)
+                val = func(*args, **kwargs)
+                cache.put(key, val)
             return val
+
         def _maybe_copy(source, target, attr):
             value = getattr(source, attr, source)
             if value is not source:
                 setattr(target, attr, value)
-        _maybe_copy(f, lru_cached, '__module__')
-        _maybe_copy(f, lru_cached, '__name__')
-        _maybe_copy(f, lru_cached, '__doc__')
-        lru_cached._cache = cache
-        return lru_cached
+
+        _maybe_copy(func, cached_wrapper, '__module__')
+        _maybe_copy(func, cached_wrapper, '__name__')
+        _maybe_copy(func, cached_wrapper, '__doc__')
+        cached_wrapper._cache = cache
+        return cached_wrapper
 
 
 class CacheMaker(object):
     """Generates decorators that can be cleared later
     """
+
     def __init__(self, maxsize=None, timeout=_DEFAULT_TIMEOUT):
         """Create cache decorator factory.
 
@@ -316,7 +368,7 @@ class CacheMaker(object):
         if name is None:
             while True:
                 name = str(uuid.uuid4())
-                ## the probability of collision is so low ....
+                # # the probability of collision is so low ....
                 if name not in self._cache:
                     break
 
@@ -333,7 +385,12 @@ class CacheMaker(object):
             timeout = self._timeout
 
         return name, maxsize, timeout
-    
+
+    def memoized(self, name=None):
+        name, maxsize, _ = self._resolve_setting(name, 0)
+        cache = self._cache[name] = UnboundedCache()
+        return lru_cache(None, cache)
+
     def lrucache(self, name=None, maxsize=None):
         """Named arguments:
         
@@ -355,12 +412,12 @@ class CacheMaker(object):
           the constructor
 
         - timeout (optional) is an int, overriding any default value set by
-          the constructor or the default value (%d seconds)  
+          the constructor or the default value (%d seconds)
         """ % _DEFAULT_TIMEOUT
         name, maxsize, timeout = self._resolve_setting(name, maxsize, timeout)
         cache = self._cache[name] = ExpiringLRUCache(maxsize, timeout)
         return lru_cache(maxsize, cache, timeout)
-    
+
     def clear(self, *names):
         """Clear the given cache(s).
         
