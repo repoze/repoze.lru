@@ -5,12 +5,25 @@ from abc import ABCMeta, abstractmethod
 import threading
 import time
 import uuid
+from warnings import warn
 
 
 _MARKER = object()
 # By default, expire items after 2**60 seconds. This fits into 64 bit
 # integers and is close enough to "never" for practical purposes.
 _DEFAULT_TIMEOUT = 2 ** 60
+
+_WARN = True
+
+
+def disable_warnings():
+    global _WARN
+    _WARN = False
+
+
+def enable_warnings():
+    global _WARN
+    _WARN = True
 
 
 class Cache(object):
@@ -170,7 +183,7 @@ class LRUCache(Cache):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-        # else: key was not in cache. Nothing to do.
+            # else: key was not in cache. Nothing to do.
 
 
 class ExpiringLRUCache(Cache):
@@ -305,7 +318,7 @@ class ExpiringLRUCache(Cache):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-        # else: key was not in cache. Nothing to do.
+            # else: key was not in cache. Nothing to do.
 
 
 class lru_cache(object):
@@ -330,12 +343,17 @@ class lru_cache(object):
         marker = _MARKER
 
         def cached_wrapper(*args, **kwargs):
-            key = (args, frozenset(kwargs.items()))
-            val = cache.get(key, marker)
-            if val is marker:
-                val = func(*args, **kwargs)
-                cache.put(key, val)
-            return val
+            try:
+                key = (args, frozenset(kwargs.items())) if kwargs else args
+                val = cache.get(key, marker)
+                if val is marker:
+                    val = func(*args, **kwargs)
+                    cache.put(key, val)
+                return val
+            except TypeError:  # unhashable types in args or kwargs
+                if _WARN:
+                    warn("method call could not be cached, *args and/or **kwargs contain unhashable types")
+                return func(*args, **kwargs)
 
         def _maybe_copy(source, target, attr):
             value = getattr(source, attr, source)
