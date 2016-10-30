@@ -5,25 +5,12 @@ from abc import ABCMeta, abstractmethod
 import threading
 import time
 import uuid
-from warnings import warn
 
 
 _MARKER = object()
 # By default, expire items after 2**60 seconds. This fits into 64 bit
 # integers and is close enough to "never" for practical purposes.
 _DEFAULT_TIMEOUT = 2 ** 60
-
-_WARN = True
-
-
-def disable_warnings():
-    global _WARN
-    _WARN = False
-
-
-def enable_warnings():
-    global _WARN
-    _WARN = True
 
 
 class Cache(object):
@@ -61,7 +48,7 @@ class UnboundedCache(Cache):
         self._data.clear()
 
     def invalidate(self, key):
-        pass
+        del self._data[key]
 
     def put(self, key, val):
         self._data[key] = val
@@ -73,7 +60,6 @@ class LRUCache(Cache):
     The Clock algorithm is not kept strictly to improve performance, e.g. to
     allow get() and invalidate() to work without acquiring the lock.
     """
-
     def __init__(self, size):
         size = int(size)
         if size < 1:
@@ -183,7 +169,7 @@ class LRUCache(Cache):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-            # else: key was not in cache. Nothing to do.
+        # else: key was not in cache. Nothing to do.
 
 
 class ExpiringLRUCache(Cache):
@@ -192,7 +178,6 @@ class ExpiringLRUCache(Cache):
     The Clock algorithm is not kept strictly to improve performance, e.g. to
     allow get() and invalidate() to work without acquiring the lock.
     """
-
     def __init__(self, size, default_timeout=_DEFAULT_TIMEOUT):
         self.default_timeout = default_timeout
         size = int(size)
@@ -318,7 +303,7 @@ class ExpiringLRUCache(Cache):
             # We have no lock, but worst thing that can happen is that we
             # set another key's entry to False.
             self.clock_refs[entry[0]] = False
-            # else: key was not in cache. Nothing to do.
+        # else: key was not in cache. Nothing to do.
 
 
 class lru_cache(object):
@@ -327,8 +312,7 @@ class lru_cache(object):
     timeout parameter specifies after how many seconds a cached entry should
     be considered invalid.
     """
-
-    def __init__(self, maxsize, cache=None, timeout=None):  # cache is an arg to serve tests
+    def __init__(self, maxsize, cache=None, timeout=None, ignore_unhashable_args=False): # cache is an arg to serve tests
         if cache is None:
             if maxsize is None:
                 cache = UnboundedCache()
@@ -337,6 +321,7 @@ class lru_cache(object):
             else:
                 cache = ExpiringLRUCache(maxsize, default_timeout=timeout)
         self.cache = cache
+        self._ignore_unhashable_args = ignore_unhashable_args
 
     def __call__(self, func):
         cache = self.cache
@@ -345,15 +330,17 @@ class lru_cache(object):
         def cached_wrapper(*args, **kwargs):
             try:
                 key = (args, frozenset(kwargs.items())) if kwargs else args
+            except TypeError, e:
+                if self._ignore_unhashable_args:
+                    return func(*args, **kwargs)
+                else:
+                    raise e
+            else:
                 val = cache.get(key, marker)
                 if val is marker:
                     val = func(*args, **kwargs)
                     cache.put(key, val)
                 return val
-            except TypeError:  # unhashable types in args or kwargs
-                if _WARN:
-                    warn("method call could not be cached, *args and/or **kwargs contain unhashable types")
-                return func(*args, **kwargs)
 
         def _maybe_copy(source, target, attr):
             value = getattr(source, attr, source)
@@ -370,7 +357,6 @@ class lru_cache(object):
 class CacheMaker(object):
     """Generates decorators that can be cleared later
     """
-
     def __init__(self, maxsize=None, timeout=_DEFAULT_TIMEOUT):
         """Create cache decorator factory.
 
@@ -386,7 +372,7 @@ class CacheMaker(object):
         if name is None:
             while True:
                 name = str(uuid.uuid4())
-                # # the probability of collision is so low ....
+                ## the probability of collision is so low ....
                 if name not in self._cache:
                     break
 
