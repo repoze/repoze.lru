@@ -312,7 +312,11 @@ class lru_cache(object):
     timeout parameter specifies after how many seconds a cached entry should
     be considered invalid.
     """
-    def __init__(self, maxsize, cache=None, timeout=None, ignore_unhashable_args=False): # cache is an arg to serve tests
+    def __init__(self,
+                 maxsize,
+                 cache=None, # cache is an arg to serve tests
+                 timeout=None,
+                 ignore_unhashable_args=False):
         if cache is None:
             if maxsize is None:
                 cache = UnboundedCache()
@@ -330,7 +334,7 @@ class lru_cache(object):
         def cached_wrapper(*args, **kwargs):
             try:
                 key = (args, frozenset(kwargs.items())) if kwargs else args
-            except TypeError, e:
+            except TypeError as e:
                 if self._ignore_unhashable_args:
                     return func(*args, **kwargs)
                 else:
