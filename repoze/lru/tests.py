@@ -312,7 +312,8 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         if default_timeout is None:
             return self._getTargetClass()(size)
         else:
-            return self._getTargetClass()(size, default_timeout=default_timeout)
+            return self._getTargetClass()(
+                size, default_timeout=default_timeout)
 
     def check_cache_is_consistent(self, cache):
         #Return if cache is consistent, else raise fail test case.
@@ -494,8 +495,8 @@ class DecoratorTests(unittest.TestCase):
         from repoze.lru import lru_cache
         return lru_cache
 
-    def _makeOne(self, maxsize, cache, timeout=None):
-        return self._getTargetClass()(maxsize, timeout=timeout, cache=cache)
+    def _makeOne(self, *args, **kw):
+        return self._getTargetClass()(*args, **kw)
 
     def test_ctor_nocache(self):
         decorator = self._makeOne(10, None)
@@ -546,20 +547,21 @@ class DecoratorTests(unittest.TestCase):
             return args, kwargs
         decorated = decorator(moreargs)
         result = decorated(3, 4, 5, a=1, b=2, c=3)
-        self.assertEqual(cache[((3, 4, 5), frozenset([ ('a',1), ('b',2), ('c',3) ]))], ((3, 4, 5), {'a':1, 'b':2, 'c':3}))
+        self.assertEqual(
+            cache[((3, 4, 5), frozenset([ ('a',1), ('b',2), ('c',3) ]))],
+            ((3, 4, 5), {'a':1, 'b':2, 'c':3}))
         self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':2, 'c':3}))
         self.assertEqual(len(cache), 1)
 
     def test_multiargs_keywords_unhashable(self):
         cache = DummyLRUCache()
-        decorator = self._makeOne(0, cache)
+        decorator = self._makeOne(0, cache, ignore_unhashable_args=True)
         def moreargs(*args, **kwargs):
             return args, kwargs
         decorated = decorator(moreargs)
-        result = decorated(3, 4, 5, a=1, b=[1,2,3])
+        result = decorated(3, 4, 5, a=1, b=[1, 2, 3])
         self.assertEqual(len(cache), 0)
-        self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':[1,2,3]}))
-
+        self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':[1, 2, 3]}))
 
     def test_expiry(self):
         #When timeout is given, decorator must eventually forget entries
