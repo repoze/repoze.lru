@@ -98,21 +98,18 @@ class LRUCacheTests(unittest.TestCase):
         for clock_ref in cache.clock_refs:
             self.assertTrue(clock_ref is True or clock_ref is False)
 
-    def _makeOne(self, size):
-        return self._getTargetClass()(size)
-
     def test_size_lessthan_1(self):
         self.assertRaises(ValueError, self._makeOne, 0)
 
     def test_get(self):
         cache = self._makeOne(1)
         # Must support different types of keys
-        self.assertEqual(cache.get("foo"), None)
-        self.assertEqual(cache.get(42), None)
-        self.assertEqual(cache.get(("foo", 42)), None)
-        self.assertEqual(cache.get(None), None)
-        self.assertEqual(cache.get(""), None)
-        self.assertEqual(cache.get(object()), None)
+        self.assertIsNone(cache.get("foo"))
+        self.assertIsNone(cache.get(42))
+        self.assertIsNone(cache.get(("foo", 42)))
+        self.assertIsNone(cache.get(None))
+        self.assertIsNone(cache.get(""))
+        self.assertIsNone(cache.get(object()))
         # Check if default value is used
         self.assertEqual(cache.get("foo", "bar"), "bar")
         self.assertEqual(cache.get("foo", default="bar"), "bar")
@@ -154,20 +151,20 @@ class LRUCacheTests(unittest.TestCase):
         cache.put("FOO", "BAR")
 
         cache.invalidate("foo")
-        self.assertEqual(cache.get("foo"), None)
+        self.assertIsNone(cache.get("foo"))
         self.assertEqual(cache.get("FOO"), "BAR")
         self.check_cache_is_consistent(cache)
 
         cache.invalidate("FOO")
-        self.assertEqual(cache.get("foo"), None)
-        self.assertEqual(cache.get("FOO"), None)
+        self.assertIsNone(cache.get("foo"))
+        self.assertIsNone(cache.get("FOO"))
         self.assertEqual(cache.data, {})
         self.check_cache_is_consistent(cache)
 
         cache.put("foo", "bar")
         cache.invalidate("nonexistingkey")
         self.assertEqual(cache.get("foo"), "bar")
-        self.assertEqual(cache.get("FOO"), None)
+        self.assertIsNone(cache.get("FOO"))
         self.check_cache_is_consistent(cache)
 
     def test_small_cache(self):
@@ -180,28 +177,28 @@ class LRUCacheTests(unittest.TestCase):
 
         cache.put("FOO", "BAR")
         self.assertEqual(cache.get("FOO"), "BAR")
-        self.assertEqual(cache.get("foo"), None)
+        self.assertIsNone(cache.get("foo"))
         self.check_cache_is_consistent(cache)
 
         # put() again
         cache.put("FOO", "BAR")
         self.assertEqual(cache.get("FOO"), "BAR")
-        self.assertEqual(cache.get("foo"), None)
+        self.assertIsNone(cache.get("foo"))
         self.check_cache_is_consistent(cache)
 
         # invalidate()
         cache.invalidate("FOO")
         self.check_cache_is_consistent(cache)
-        self.assertEqual(cache.get("FOO"), None)
-        self.assertEqual(cache.get("foo"), None)
+        self.assertIsNone(cache.get("FOO"))
+        self.assertIsNone(cache.get("foo"))
 
         # clear()
         cache.put("foo", "bar")
         self.assertEqual(cache.get("foo"), "bar")
         cache.clear()
         self.check_cache_is_consistent(cache)
-        self.assertEqual(cache.get("FOO"), None)
-        self.assertEqual(cache.get("foo"), None)
+        self.assertIsNone(cache.get("FOO"))
+        self.assertIsNone(cache.get("foo"))
 
     def test_equal_but_not_identical(self):
         #equal but not identical keys must be treated the same
@@ -217,8 +214,8 @@ class LRUCacheTests(unittest.TestCase):
         cache = self._makeOne(1)
         cache.put(tuple_one, 42)
         cache.invalidate(tuple_two)
-        self.assertEqual(cache.get(tuple_one), None)
-        self.assertEqual(cache.get(tuple_two), None)
+        self.assertIsNone(cache.get(tuple_one))
+        self.assertIsNone(cache.get(tuple_two))
 
     def test_perfect_hitrate(self):
         #If cache size equals number of items, expect 100% cache hits
@@ -303,7 +300,7 @@ class LRUCacheTests(unittest.TestCase):
 
     def test_it(self):
         cache = self._makeOne(3)
-        self.assertEqual(cache.get('a'), None)
+        self.assertIsNone(cache.get('a'))
 
         cache.put('a', '1')
         pos, value = cache.data.get('a')
@@ -339,17 +336,17 @@ class LRUCacheTests(unittest.TestCase):
         # because "a" is the first item with ref==False that is found.
         cache.put('d', '4')
         self.assertEqual(len(cache.data), 3)
-        self.assertEqual(cache.data.get('a'), None)
+        self.assertIsNone(cache.data.get('a'))
 
         # Only item "d" has ref==True. cache.hand points at "b", so "b"
         # will be evicted when "e" is inserted. "c" will be left alone.
         cache.put('e', '5')
         self.assertEqual(len(cache.data), 3)
-        self.assertEqual(cache.data.get('b'), None)
+        self.assertIsNone(cache.data.get('b'))
         self.assertEqual(cache.get('d'), '4')
         self.assertEqual(cache.get('e'), '5')
-        self.assertEqual(cache.get('a'), None)
-        self.assertEqual(cache.get('b'), None)
+        self.assertIsNone(cache.get('a'))
+        self.assertIsNone(cache.get('b'))
         self.assertEqual(cache.get('c'), '3')
 
         self.check_cache_is_consistent(cache)
@@ -408,7 +405,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         #
         # Looks at internal data, which is different for ExpiringLRUCache.
         cache = self._makeOne(3)
-        self.assertEqual(cache.get('a'), None)
+        self.assertIsNone(cache.get('a'))
 
         cache.put('a', '1')
         pos, value, expires = cache.data.get('a')
@@ -444,17 +441,17 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         # because "a" is the first item with ref==False that is found.
         cache.put('d', '4')
         self.assertEqual(len(cache.data), 3)
-        self.assertEqual(cache.data.get('a'), None)
+        self.assertIsNone(cache.data.get('a'))
 
         # Only item "d" has ref==True. cache.hand points at "b", so "b"
         # will be evicted when "e" is inserted. "c" will be left alone.
         cache.put('e', '5')
         self.assertEqual(len(cache.data), 3)
-        self.assertEqual(cache.data.get('b'), None)
+        self.assertIsNone(cache.data.get('b'))
         self.assertEqual(cache.get('d'), '4')
         self.assertEqual(cache.get('e'), '5')
-        self.assertEqual(cache.get('a'), None)
-        self.assertEqual(cache.get('b'), None)
+        self.assertIsNone(cache.get('a'))
+        self.assertIsNone(cache.get('b'))
         self.assertEqual(cache.get('c'), '3')
 
         self.check_cache_is_consistent(cache)
@@ -477,7 +474,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
 
         time.sleep(0.1)
         cache.put("FOO", "BAR")
-        self.assertEqual(cache.get("foo"), None)
+        self.assertIsNone(cache.get("foo"))
         self.assertEqual(cache.get("FOO"), "BAR")
         self.check_cache_is_consistent(cache)
 
@@ -496,21 +493,21 @@ class ExpiringLRUCacheTests(LRUCacheTests):
 
         # Entry "one" must expire, "two"/"three" remain valid
         time.sleep(0.1)
-        self.assertEqual(cache.get("one"), None)
+        self.assertIsNone(cache.get("one"))
         self.assertEqual(cache.get("two"), 2)
         self.assertEqual(cache.get("three"), 3)
 
         # Only "three" remains valid
         time.sleep(0.1)
-        self.assertEqual(cache.get("one"), None)
-        self.assertEqual(cache.get("two"), None)
+        self.assertIsNone(cache.get("one"))
+        self.assertIsNone(cache.get("two"))
         self.assertEqual(cache.get("three"), 3)
 
         # All have expired
         time.sleep(0.1)
-        self.assertEqual(cache.get("one"), None)
-        self.assertEqual(cache.get("two"), None)
-        self.assertEqual(cache.get("three"), None)
+        self.assertIsNone(cache.get("one"))
+        self.assertIsNone(cache.get("two"))
+        self.assertIsNone(cache.get("three"))
 
         self.check_cache_is_consistent(cache)
 
@@ -537,7 +534,7 @@ class ExpiringLRUCacheTests(LRUCacheTests):
         time.sleep(0.1)
         # "foo2" must have expired
         self.assertEqual(cache.get("foo"), "bar")
-        self.assertEqual(cache.get("foo2"), None)
+        self.assertIsNone(cache.get("foo2"))
         self.assertEqual(cache.get("foo3"), "bar3")
         self.check_cache_is_consistent(cache)
 
