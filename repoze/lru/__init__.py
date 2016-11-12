@@ -1,6 +1,6 @@
 """ LRU caching class and decorator """
-from __future__ import with_statement
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
+from abc import ABCMeta
 
 import threading
 import time
