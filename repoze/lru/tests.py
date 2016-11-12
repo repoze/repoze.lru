@@ -539,6 +539,28 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result, (3, 4, 5))
         self.assertEqual(len(cache), 1)
 
+    def test_multiargs_keywords(self):
+        cache = DummyLRUCache()
+        decorator = self._makeOne(0, cache)
+        def moreargs(*args, **kwargs):
+            return args, kwargs
+        decorated = decorator(moreargs)
+        result = decorated(3, 4, 5, a=1, b=2, c=3)
+        self.assertEqual(cache[((3, 4, 5), frozenset([ ('a',1), ('b',2), ('c',3) ]))], ((3, 4, 5), {'a':1, 'b':2, 'c':3}))
+        self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':2, 'c':3}))
+        self.assertEqual(len(cache), 1)
+
+    def test_multiargs_keywords_unhashable(self):
+        cache = DummyLRUCache()
+        decorator = self._makeOne(0, cache)
+        def moreargs(*args, **kwargs):
+            return args, kwargs
+        decorated = decorator(moreargs)
+        result = decorated(3, 4, 5, a=1, b=[1,2,3])
+        self.assertEqual(len(cache), 0)
+        self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':[1,2,3]}))
+
+
     def test_expiry(self):
         #When timeout is given, decorator must eventually forget entries
         @self._makeOne(1, None, timeout=0.1)
