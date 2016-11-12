@@ -18,19 +18,19 @@ class Cache(object):
 
     @abstractmethod
     def clear(self):
-        pass
+        """Remove all entries from the cache"""
 
     @abstractmethod
     def get(self, key, default=None):
-        pass
+        """Return value for key. If not in cache, return default"""
 
     @abstractmethod
     def put(self, key, val):
-        pass
+        """Add key to the cache with value val"""
 
     @abstractmethod
     def invalidate(self, key):
-        pass
+        """Remove key from the cache"""
 
 
 class UnboundedCache(Cache):
@@ -48,7 +48,10 @@ class UnboundedCache(Cache):
         self._data.clear()
 
     def invalidate(self, key):
-        del self._data[key]
+        try:
+            del self._data[key]
+        except KeyError:
+            pass
 
     def put(self, key, val):
         self._data[key] = val
