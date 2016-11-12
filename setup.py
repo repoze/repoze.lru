@@ -26,11 +26,8 @@ except:
 
 testing_extras = ['nose', 'coverage']
 
-str_version = None
-execfile('repoze/lru/__version__.py')
-
 setup(name='repoze.lru',
-      version=str_version,
+      version='0.7.1',
       description='A tiny LRU cache implementation and decorator',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
