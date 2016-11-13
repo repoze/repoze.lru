@@ -380,7 +380,7 @@ class CacheMaker(object):
             while True:
                 name = str(uuid.uuid4())
                 ## the probability of collision is so low ....
-                if name not in self._cache:
+                if name not in self._cache:  # pragma: NO COVER
                     break
 
         if name in self._cache:

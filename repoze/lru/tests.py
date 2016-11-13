@@ -548,6 +548,25 @@ class DecoratorTests(unittest.TestCase):
     def _makeOne(self, *args, **kw):
         return self._getTargetClass()(*args, **kw)
 
+    def test_ctor_no_size(self):
+        from repoze.lru import UnboundedCache
+        decorator = self._makeOne(maxsize=None)
+        self.assertIsInstance(decorator.cache, UnboundedCache)
+        self.assertEqual(decorator.cache._data, {})
+
+    def test_ctor_w_size_no_timeout(self):
+        from repoze.lru import LRUCache
+        decorator = self._makeOne(maxsize=10)
+        self.assertIsInstance(decorator.cache, LRUCache)
+        self.assertEqual(decorator.cache.size, 10)
+
+    def test_ctor_w_size_w_timeout(self):
+        from repoze.lru import ExpiringLRUCache
+        decorator = self._makeOne(maxsize=10, timeout=30)
+        self.assertIsInstance(decorator.cache, ExpiringLRUCache)
+        self.assertEqual(decorator.cache.size, 10)
+        self.assertEqual(decorator.cache.default_timeout, 30)
+
     def test_ctor_nocache(self):
         decorator = self._makeOne(10, None)
         self.assertEqual(decorator.cache.size, 10)
@@ -603,7 +622,7 @@ class DecoratorTests(unittest.TestCase):
         self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':2, 'c':3}))
         self.assertEqual(len(cache), 1)
 
-    def test_multiargs_keywords_unhashable(self):
+    def test_multiargs_keywords_ignore_unhashable_true(self):
         cache = DummyLRUCache()
         decorator = self._makeOne(0, cache, ignore_unhashable_args=True)
         def moreargs(*args, **kwargs):
@@ -612,6 +631,18 @@ class DecoratorTests(unittest.TestCase):
         result = decorated(3, 4, 5, a=1, b=[1, 2, 3])
         self.assertEqual(len(cache), 0)
         self.assertEqual(result, ((3, 4, 5), {'a':1, 'b':[1, 2, 3]}))
+
+    def test_multiargs_keywords_ignore_unhashable(self):
+        cache = DummyLRUCache()
+        decorator = self._makeOne(0, cache, ignore_unhashable_args=False)
+
+        def moreargs(*args, **kwargs):  # pragma: NO COVER
+            return args, kwargs
+
+        decorated = decorator(moreargs)
+
+        with self.assertRaises(TypeError):
+            decorated(3, 4, 5, a=1, b=[1, 2, 3])
 
     def test_expiry(self):
         #When timeout is given, decorator must eventually forget entries
@@ -734,6 +765,15 @@ class CacherMaker(unittest.TestCase):
         self.assertEqual(len(maker._cache['two'].data), 10)
         self.assertEqual(len(maker._cache['three'].data), 0)
 
+    def test_memoized(self):
+        from repoze.lru import lru_cache
+        from repoze.lru import UnboundedCache
+        maker = self._makeOne(maxsize=10)
+        memo = maker.memoized('test')
+        self.assertIsInstance(memo, lru_cache)
+        self.assertIsInstance(memo.cache, UnboundedCache)
+        self.assertIs(memo.cache, maker._cache['test'])
+
     def test_expiring(self):
         size = 10
         timeout = 10
@@ -741,10 +781,13 @@ class CacherMaker(unittest.TestCase):
         cache = self._makeOne(maxsize=size, timeout=timeout)
         for i in range(100):
             if not i:
-                decorated = cache.expiring_lrucache(name=name)(_adder)
+                decorator = cache.expiring_lrucache(name=name)
+                decorated = decorator(_adder)
                 self.assertEqual( cache._cache[name].size,size)
             else:
-                decorated = cache.expiring_lrucache()(_adder)
+                decorator = cache.expiring_lrucache()
+                decorated = decorator(_adder)
+                self.assertEqual(decorator.cache.default_timeout, timeout)
             decorated(10)
 
         self.assertEqual( len(cache._cache) , 100)
@@ -757,6 +800,15 @@ class CacherMaker(unittest.TestCase):
         for _cache in cache._cache.values():
             self.assertEqual( _cache.size,size)
             self.assertEqual(len(_cache.data),0)
+
+    def test_expiring_w_timeout(self):
+        size = 10
+        maker_timeout = 10
+        timeout = 20
+        name = "name"
+        cache = self._makeOne(maxsize=size, timeout=maker_timeout)
+        decorator = cache.expiring_lrucache(name=name, timeout=20)
+        self.assertEqual(decorator.cache.default_timeout, timeout)
 
 def _adder(x):
     return x + 10
