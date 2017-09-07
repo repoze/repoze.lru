@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.7 (unreleased)
+0.7 (2017-09-06)
 ----------------
 
 - Add ``CacheMaker.memoize`` to create named, unbounded caches.
