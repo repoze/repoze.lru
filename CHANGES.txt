@@ -4,13 +4,13 @@ Changelog
 0.7 (unreleased)
 ----------------
 
-- Add 'CacheMaker.memoize' to create named, unbounded caches.
+- Add ``CacheMaker.memoize`` to create named, unbounded caches.
 
-- Add 'UnboundedCache', backed by a dict.
+- Add ``UnboundedCache``, backed by a dict.
 
-- Add an 'ignore_unhashable_args' option to 'lru_cache':  if True, the
+- Add an ``ignore_unhashable_args`` option to ``lru_cache``:  if True, the
   cache will discard arguments which cannot be hashed, rather than raising
-  a 'TypeError'.
+  a ``TypeError``.
 
 - Expose cache object on the wrapped function, e.g. to allow extracting cache
   performance data easily (PR #20).
@@ -24,7 +24,7 @@ Changelog
 0.6 (2012-07-12)
 ----------------
 
-- Added a 'CacheMaker' helper class:  a maker keeps references (by name)
+- Added a ``CacheMaker`` helper class:  a maker keeps references (by name)
   to the caches it creates, to permit them to be cleared.
 
 - Added statistics to each cache, tracking lookups, hits, misses, and
