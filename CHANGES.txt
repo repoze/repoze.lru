@@ -17,7 +17,7 @@ Changelog
 
 - Avoid crash when memoizing a ``functools.partial`` instance (PR #21).
 
-- Add explicit support for Python 3.3, 3.4, and 3.5.
+- Add explicit support for Python3.4, 3.5, and 3.6.
 
 - Drop support for Python 2.6 and 3.2.
 
