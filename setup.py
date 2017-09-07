@@ -27,7 +27,7 @@ except:
 testing_extras = ['nose', 'coverage']
 
 setup(name='repoze.lru',
-      version='0.7',
+      version='0.8dev0',
       description='A tiny LRU cache implementation and decorator',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
