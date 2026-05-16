@@ -4,6 +4,8 @@ Changelog
 0.8 (unreleased)
 ----------------
 
+- Publish releases to PyPI via Github workflow.
+
 - Add Github workflow for unit tests / coverage.
 
 - Drop ``pkg_resources`` namespace support.
