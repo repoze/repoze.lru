@@ -1,0 +1,24 @@
+name: Build & publish to pypi
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  release-to-pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "pyproject.toml"
+      - name: Build distributions
+        run: uv build --sdist --wheel
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
