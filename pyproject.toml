@@ -1,0 +1,114 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "repoze-lru"
+version = "0.8dev0"
+description = "A tiny LRU cache implementation and decorator"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.10"
+dependencies = []
+
+authors = [
+  {name = "Tres Seaver, Agendaless Consulting", email = "tseaver@agendaless.com"},
+]
+license = "LicenseRef-Repoze-BSD-derived"
+license-files = ["LICENSE.txt"]
+
+keywords = ["repoze", "lru", "cache"]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: WSGI",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
+]
+# Not supported by 'setuptools':
+# import-namespaces = ["repoze"]
+# import-names = ["repoze.lru"]
+
+[project.urls]
+Repository = "https://github.com/repoze/repoze.lru"
+Issues = "https://github.com/repoze/repoze.lru/issues"
+Documentation = "https://repozelru.readthedocs.io/en/stable/index.html"
+Changelog = "https://github.com/repoze/repoze.lru/blob/master/CHANGES.rst"
+
+[project.entry-points."paste.filter_app_factory"]
+lru = "repoze.lru:make_lru"
+
+[dependency-groups]
+dev = [
+    "tox",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "check-manifest",
+    "build",
+    "twine",
+]
+docs = [
+    "sphinx",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+python_files = "test_*.py"
+testpaths = [ "tests" ]
+addopts = "--cov=repoze.lru --cov=tests/unit --cov-branch"
+
+[tool.coverage.run]
+omit = []
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+line-length = 79
+exclude = [
+]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    # flake8
+    "F",
+    # pycodestyle
+    "E",
+    # flake8-bugbear
+    "B",
+    # pyupgrade
+    "U",
+    # isort
+    "I",
+    # pandas vet
+    "PD",
+    # tryceratops
+    "TRY",
+    # flake8-pytest-style
+    "PT",
+]
+ignore = [
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"

@@ -4,7 +4,27 @@ Changelog
 0.8 (unreleased)
 ----------------
 
-- TBD
+- Publish releases to PyPI via Github workflow.
+
+- Add Github workflow for unit tests / coverage.
+
+- Drop ``pkg_resources`` namespace support.
+
+- Move package metadata to ``pyproject.toml``.
+
+- Move to ``src/`` layout, with ``tests/unit/`` at top level.
+
+- Add support for Python 3.10, 3.11, 3.12, 3.13, 3.14.
+
+- Drop support for Python < 3.10.
+
+- Replace ``nosetests`` with ``pytest``, and convert tests to use
+  ``pytest`` patterns (fixtures, ``assert``) vs. ``unittest.TestCase``
+  patterns.
+
+- Lint code, patterns using ``ruff check`` / ``ruff format --check``.
+
+- Lint packaging using ``check-mainifest`` / ``build`` /  ``twine``.
 
 0.7 (2017-09-06)
 ----------------
