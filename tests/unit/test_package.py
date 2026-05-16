@@ -35,7 +35,7 @@ def test_unboundedcache_get_hit():
 
 def test_unboundedcache_clear():
     cache = lru.UnboundedCache()
-    extant = cache._data['extant'] = object()
+    _extant = cache._data['extant'] = object()
 
     cache.clear()
 
@@ -50,7 +50,7 @@ def test_unboundedcache_invalidate_miss():
 
 def test_unboundedcache_invalidate_hit():
     cache = lru.UnboundedCache()
-    extant = cache._data['extant'] = object()
+    _extant = cache._data['extant'] = object()
 
     cache.invalidate('extant')
 
@@ -83,17 +83,17 @@ def check_lru_cache_is_consistent(cache):
     #   2. clock_keys must point back to the entry
     for key, value in cache.data.items():
         pos, val = value
-        assert type(pos) == type(42) or type(pos) == type(2 ** 128)
+        assert type(pos) is int or type(pos) is type(2 ** 128)
         assert pos >= 0
-        pos <= cache.maxpos
+        assert pos <= cache.maxpos
 
         clock_key = cache.clock_keys[pos]
-        clock_key is key
+        assert clock_key is key
         clock_ref = cache.clock_refs[pos]
 
     # All clock_refs must be True or False, nothing else.
     for clock_ref in cache.clock_refs:
-        clock_ref is True or clock_ref is False
+        assert clock_ref is True or clock_ref is False
 
 
 def check_expiring_lru_cache_is_consistent(cache):
@@ -116,7 +116,7 @@ def check_expiring_lru_cache_is_consistent(cache):
     #   2. clock_keys must point back to the entry
     for key, value in cache.data.items():
         pos, val, timeout = value
-        assert type(pos) == type(42) or type(pos) == type(2 ** 128)
+        assert type(pos) is int or type(pos) is type(2 ** 128)
         assert pos >= 0
         assert pos <= cache.maxpos
 
@@ -124,7 +124,7 @@ def check_expiring_lru_cache_is_consistent(cache):
         assert clock_key is key
         clock_ref = cache.clock_refs[pos]
 
-        assert type(timeout) == type(3.141)
+        assert type(timeout) is float
 
     # All clock_refs must be True or False, nothing else.
     for clock_ref in cache.clock_refs:
@@ -145,7 +145,7 @@ def cache_class(cache_class_and_checker):
 
 
 def test_cache_size_lessthan_1(cache_class):
-    with pytest.raises(ValueError):
+    with pytest.raises(lru.CacheSizeMustBeGreaterThanZero):
         cache_class(0)
 
 
@@ -288,14 +288,14 @@ def test_cache_w_perfect_hitrate(cache_class_and_checker):
     cache = cache_class(size)
 
     for count in range(size):
-        cache.put(count, "item%s" % count)
+        cache.put(count, f"item{count}")
 
-    for cache_op in range(10000):
+    for _cache_op in range(10000):
         item = random.randrange(0, size - 1)
         if random.getrandbits(1):
-            assert cache.get(item) == "item%s" % item
+            assert cache.get(item) == f"item{item}"
         else:
-            cache.put(item, "item%s" % item)
+            cache.put(item, f"item{item}")
 
     assert cache.misses == 0
     assert cache.evictions == 0
@@ -311,23 +311,23 @@ def test_cache_w_imperfect_hitrate(cache_class_and_checker):
     cache = cache_class(size / 2)
 
     for count in range(size):
-        cache.put(count, "item%s" % count)
+        cache.put(count, f"item{count}")
 
     hits = 0
     misses = 0
     total_gets = 0
-    for cache_op in range(10000):
+    for _cache_op in range(10000):
         item = random.randrange(0, size - 1)
         if random.getrandbits(1):
             entry = cache.get(item)
             total_gets += 1
-            assert (entry == "item%s" % item) or entry is None
+            assert (entry == f"item{item}") or entry is None
             if entry is None:
                 misses += 1
             else:
                 hits += 1
         else:
-            cache.put(item, "item%s" % item)
+            cache.put(item, f"item{item}")
 
     # Cache hit rate should be roughly 50%
     hit_ratio = hits / float(total_gets) * 100
@@ -372,31 +372,31 @@ def test_lru_cache_ops():
 
     cache.put('a', '1')
     pos, value = cache.data.get('a')
-    assert cache.clock_refs[pos] == True
+    assert cache.clock_refs[pos] is True
     assert cache.clock_keys[pos] == 'a'
     assert value == '1'
     assert cache.get('a') == '1'
     assert cache.hand == pos + 1
 
     pos, value = cache.data.get('a')
-    assert cache.clock_refs[pos] == True
+    assert cache.clock_refs[pos] is True
     assert cache.hand == pos + 1
     assert len(cache.data) == 1
 
     cache.put('b', '2')
     pos, value = cache.data.get('b')
-    assert cache.clock_refs[pos] == True
+    assert cache.clock_refs[pos] is True
     assert cache.clock_keys[pos] == 'b'
     assert len(cache.data) == 2
 
     cache.put('c', '3')
     pos, value = cache.data.get('c')
-    assert cache.clock_refs[pos] == True
+    assert cache.clock_refs[pos] is True
     assert cache.clock_keys[pos] == 'c'
     assert len(cache.data) == 3
 
     pos, value = cache.data.get('a')
-    assert cache.clock_refs[pos] == True
+    assert cache.clock_refs[pos] is True
 
     cache.get('a')
     # All items have ref==True. cache.hand points to "a". Putting
@@ -429,7 +429,7 @@ def test_expiring_lru_cache_ops():
 
     cache.put('a', '1')
     pos, value, expires = cache.data.get('a')
-    assert cache.clock_refs[pos] == True
+    assert cache.clock_refs[pos] is True
     assert cache.clock_keys[pos] == 'a'
     assert value == '1'
     assert cache.get('a') == '1'
@@ -735,28 +735,32 @@ def test_cachemaker_exception():
     maker = lru.CacheMaker()
     size = 10
     name = "name"
-    decorated = maker.lrucache(maxsize=size, name=name)(_adder)
+    _decorated = maker.lrucache(maxsize=size, name=name)(_adder)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(lru.CacheAlreadyInUse):
         maker.lrucache(maxsize=size, name=name)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(lru.CacheMaxsizeRequired):
         maker.lrucache()
 
 
 def test_cachemaker_defaultvalue_and_clear():
     size = 10
     maker = lru.CacheMaker(maxsize=size)
-    for i in range(100):
+
+    for _i in range(100):
         decorated = maker.lrucache()(_adder)
         decorated(10)
 
     assert len(maker._cache)  == 100
+
     for _cache in maker._cache.values():
         assert  _cache.size == size
         assert len(_cache.data) == 1
+
     ## and test clear cache
     maker.clear()
+
     for _cache in maker._cache.values():
         assert  _cache.size == size
         assert len(_cache.data) == 0
@@ -766,12 +770,16 @@ def test_cachemaker_clear_with_single_name():
     maker = lru.CacheMaker(maxsize=10)
     one = maker.lrucache(name='one')(_adder)
     two = maker.lrucache(name='two')(_adder)
+
     for i in range(100):
         _ = one(i)
         _ = two(i)
+
     assert len(maker._cache['one'].data) == 10
     assert len(maker._cache['two'].data) == 10
+
     maker.clear('one')
+
     assert len(maker._cache['one'].data) == 0
     assert len(maker._cache['two'].data) == 10
 
@@ -781,14 +789,18 @@ def test_cachemaker_clear_with_multiple_names():
     one = maker.lrucache(name='one')(_adder)
     two = maker.lrucache(name='two')(_adder)
     three = maker.lrucache(name='three')(_adder)
+
     for i in range(100):
         _ = one(i)
         _ = two(i)
         _ = three(i)
+
     assert len(maker._cache['one'].data) == 10
     assert len(maker._cache['two'].data) == 10
     assert len(maker._cache['three'].data) == 10
+
     maker.clear('one', 'three')
+
     assert len(maker._cache['one'].data) == 0
     assert len(maker._cache['two'].data) == 10
     assert len(maker._cache['three'].data) == 0
@@ -796,7 +808,9 @@ def test_cachemaker_clear_with_multiple_names():
 
 def test_cachemaker_memoized():
     maker = lru.CacheMaker(maxsize=10)
+
     memo = maker.memoized('test')
+
     assert isinstance(memo, lru.lru_cache)
     assert isinstance(memo.cache, lru.UnboundedCache)
     assert memo.cache is maker._cache['test']
@@ -819,12 +833,15 @@ def test_cachemaker_expiring():
         decorated(10)
 
     assert len(cache._cache) == 100
+
     for _cache in cache._cache.values():
         assert _cache.size == size
         assert _cache.default_timeout == timeout
         assert len(_cache.data) == 1
+
     ## and test clear cache
     cache.clear()
+
     for _cache in cache._cache.values():
         assert _cache.size ==size
         assert len(_cache.data) ==0
@@ -836,7 +853,9 @@ def test_cachemaker_expiring_w_timeout():
     timeout = 20
     name = "name"
     cache = lru.CacheMaker(maxsize=size, timeout=maker_timeout)
+
     decorator = cache.expiring_lrucache(name=name, timeout=20)
+
     assert decorator.cache.default_timeout == timeout
 
 

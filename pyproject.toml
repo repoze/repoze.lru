@@ -55,6 +55,7 @@ dev = [
     "tox",
     "pytest",
     "pytest-cov",
+    "ruff",
 ]
 docs = [
     "sphinx",
@@ -80,3 +81,31 @@ line-length = 79
 exclude = [
 ]
 target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    # flake8
+    "F",
+    # pycodestyle
+    "E",
+    # flake8-bugbear
+    "B",
+    # pyupgrade
+    "U",
+    # isort
+    "I",
+    # pandas vet
+    "PD",
+    # tryceratops
+    "TRY",
+    # flake8-pytest-style
+    "PT",
+]
+ignore = [
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
