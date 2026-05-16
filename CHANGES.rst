@@ -4,7 +4,19 @@ Changelog
 0.8 (unreleased)
 ----------------
 
-- TBD
+- Drop ``pkg_resources`` namespace support.
+
+- Move package metadata to ``pyproject.toml``.
+
+- Move to ``src/`` layout, with ``tests/unit/`` at top level.
+
+- Add support for Python 3.10, 3.11, 3.12, 3.13, 3.14.
+
+- Drop support for Python < 3.10.
+
+- Replace ``nosetests`` with ``pytest``, and convert tests to use
+  ``pytest`` patterns (fixtures, ``assert``) vs. ``unittest.TestCase``
+  patterns.
 
 0.7 (2017-09-06)
 ----------------

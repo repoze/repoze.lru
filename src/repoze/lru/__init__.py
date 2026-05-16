@@ -1,7 +1,5 @@
 """ LRU caching class and decorator """
-from abc import abstractmethod
-from abc import ABCMeta
-
+import abc
 import threading
 import time
 import uuid
@@ -14,21 +12,21 @@ _DEFAULT_TIMEOUT = 2 ** 60
 
 
 class Cache(object):
-    __metaclass__ = ABCMeta
+    __metaclass__ = abc.ABCMeta
 
-    @abstractmethod
+    @abc.abstractmethod
     def clear(self):
         """Remove all entries from the cache"""
 
-    @abstractmethod
+    @abc.abstractmethod
     def get(self, key, default=None):
         """Return value for key. If not in cache, return default"""
 
-    @abstractmethod
+    @abc.abstractmethod
     def put(self, key, val):
         """Add key to the cache with value val"""
 
-    @abstractmethod
+    @abc.abstractmethod
     def invalidate(self, key):
         """Remove key from the cache"""
 
