@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "repoze-lru"
-version = "0.8dev0"
+version = "0.8"
 description = "A tiny LRU cache implementation and decorator"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.10"

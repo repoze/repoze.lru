@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.8 (unreleased)
+0.8 (2026-05-16)
 ----------------
 
 - Publish releases to PyPI via Github workflow.
