@@ -20,6 +20,8 @@ Changelog
   ``pytest`` patterns (fixtures, ``assert``) vs. ``unittest.TestCase``
   patterns.
 
+- Lint code, patterns using ``ruff check`` / ``ruff format --check``.
+
 0.7 (2017-09-06)
 ----------------
 

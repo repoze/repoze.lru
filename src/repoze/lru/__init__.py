@@ -1,4 +1,5 @@
-""" LRU caching class and decorator """
+"""LRU caching class and decorator"""
+
 import abc
 import threading
 import time
@@ -7,7 +8,7 @@ import uuid
 _MARKER = object()
 # By default, expire items after 2**60 seconds. This fits into 64 bit
 # integers and is close enough to "never" for practical purposes.
-_DEFAULT_TIMEOUT = 2 ** 60
+_DEFAULT_TIMEOUT = 2**60
 
 
 class CacheSizeMustBeGreaterThanZero(ValueError):
@@ -25,6 +26,7 @@ class CacheAlreadyInUse(KeyError):
     def __init__(self, name):
         self.name = name
         super().__init__(f"cache {name} already in use")
+
 
 class Cache:
     __metaclass__ = abc.ABCMeta
@@ -71,11 +73,12 @@ class UnboundedCache(Cache):
 
 
 class LRUCache(Cache):
-    """ Implements a pseudo-LRU algorithm (CLOCK)
+    """Implements a pseudo-LRU algorithm (CLOCK)
 
     The Clock algorithm is not kept strictly to improve performance, e.g. to
     allow get() and invalidate() to work without acquiring the lock.
     """
+
     def __init__(self, size):
         size = int(size)
 
@@ -191,11 +194,12 @@ class LRUCache(Cache):
 
 
 class ExpiringLRUCache(Cache):
-    """ Implements a pseudo-LRU algorithm (CLOCK) with expiration times
+    """Implements a pseudo-LRU algorithm (CLOCK) with expiration times
 
     The Clock algorithm is not kept strictly to improve performance, e.g. to
     allow get() and invalidate() to work without acquiring the lock.
     """
+
     def __init__(self, size, default_timeout=_DEFAULT_TIMEOUT):
         self.default_timeout = default_timeout
         size = int(size)
@@ -327,16 +331,19 @@ class ExpiringLRUCache(Cache):
 
 
 class lru_cache:
-    """ Decorator for LRU-cached function
+    """Decorator for LRU-cached function
 
     timeout parameter specifies after how many seconds a cached entry should
     be considered invalid.
     """
-    def __init__(self,
-                 maxsize,
-                 cache=None, # cache is an arg to serve tests
-                 timeout=None,
-                 ignore_unhashable_args=False):
+
+    def __init__(
+        self,
+        maxsize,
+        cache=None,  # cache is an arg to serve tests
+        timeout=None,
+        ignore_unhashable_args=False,
+    ):
         if cache is None:
             if maxsize is None:
                 cache = UnboundedCache()
@@ -371,16 +378,16 @@ class lru_cache:
             if value is not source:
                 setattr(target, attr, value)
 
-        _maybe_copy(func, cached_wrapper, '__module__')
-        _maybe_copy(func, cached_wrapper, '__name__')
-        _maybe_copy(func, cached_wrapper, '__doc__')
+        _maybe_copy(func, cached_wrapper, "__module__")
+        _maybe_copy(func, cached_wrapper, "__name__")
+        _maybe_copy(func, cached_wrapper, "__doc__")
         cached_wrapper._cache = cache
         return cached_wrapper
 
 
 class CacheMaker:
-    """Generates decorators that can be cleared later
-    """
+    """Generates decorators that can be cleared later"""
+
     def __init__(self, maxsize=None, timeout=_DEFAULT_TIMEOUT):
         """Create cache decorator factory.
 
