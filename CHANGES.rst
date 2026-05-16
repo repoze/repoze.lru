@@ -4,6 +4,8 @@ Changelog
 0.8 (unreleased)
 ----------------
 
+- Add Github workflow for unit tests / coverage.
+
 - Drop ``pkg_resources`` namespace support.
 
 - Move package metadata to ``pyproject.toml``.
