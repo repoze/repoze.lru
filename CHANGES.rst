@@ -22,6 +22,8 @@ Changelog
 
 - Lint code, patterns using ``ruff check`` / ``ruff format --check``.
 
+- Lint packaging using ``check-mainifest`` / ``build`` /  ``twine``.
+
 0.7 (2017-09-06)
 ----------------
 

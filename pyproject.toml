@@ -56,6 +56,9 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
+    "check-manifest",
+    "build",
+    "twine",
 ]
 docs = [
     "sphinx",
